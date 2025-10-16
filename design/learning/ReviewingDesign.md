@@ -1,0 +1,5 @@
+# Modifications to Reviewing from Assignment 2
+
+In assignment 2, users could add reviews within the EventParticipation concept, which tracked event participation for users, including information on when they rsvp to an event, attend, and do not attend. My rationale at the time was that users should only be able to review events they actually attended. By including everything within one concept relating to event attendance, it would be easy to track all the states together. 
+
+However, this design was more aligned with object-oriented reasoning rather than concept-based design. In this updated version, I’ve separated the Reviewing concept into its own module. The coordination between attendance and reviewing would now be better handled through syncs, rather than embedding one concept’s behavior inside another. This makes the concept clearer, more general, and modular, since it no longer depends on event-specific logic and can work with any type of item through its generic parameters (User, Item).
