@@ -1,0 +1,7 @@
+# Modifications to UserAuthentication from Assignment 2
+
+I originally did not include the UserAuthentication concept in my portfolio for Assignment 2. Although several of my earlier concepts implicitly required a logged-in user, I had not explicitly modeled authentication. For this iteration, I added the concept to handle the process of registering and authenticating user accounts. This addition ensures that each user can securely access and modify information that is specific to their own account, which is essential for maintaining personalized experiences within the application.
+
+## Design Changes and Rationale
+
+When designing this concept, I initially considered adding a logged-in flag to track session state. My goal was to allow features in other concepts to depend on whether a user was currently authenticated, which would be necessary for future syncs. However, upon asking context for feedback, it was clear that this state would be better suited for another concept that focuses on the session information once a user logs in. By only including aspects related to the idea of authenticating, this concept remains modular and independent. The majority of this concept was also based on my previous work for pset 1, in which we implemented a concept for user authentication with security tokens. 

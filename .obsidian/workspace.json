@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "README.md",
+                "file": "design/brainstorming/questioning.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "README"
+              "title": "questioning"
             }
           }
         ]
@@ -171,6 +171,15 @@
   },
   "active": "60ccb8b74e272dda",
   "lastOpenFiles": [
-    "README.md"
+    "context/design/brainstorming/questioning.md/20251009_133327.1b7624fc.md",
+    "context/design/brainstorming/questioning.md/steps/response.35560bf2.md",
+    "context/design/brainstorming/questioning.md/20251009_133310.de25cd31.md",
+    "context/design/brainstorming/questioning.md/steps/prompt.b2cc988e.md",
+    "context/design/brainstorming/questioning.md/20251009_133236.be03578b.md",
+    "context/design/brainstorming/questioning.md/steps/response.9fb605a1.md",
+    "context/design/brainstorming/questioning.md/20251009_133229.a4493f65.md",
+    "context/design/brainstorming/questioning.md/steps/prompt.21c859d1.md",
+    "README.md",
+    "design/brainstorming/questioning.md"
   ]
 }
