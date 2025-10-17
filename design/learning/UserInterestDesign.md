@@ -1,0 +1,7 @@
+# Modifications to UserInterest from Assignment 2
+
+In assignment 2, the purpose of the UserInterest concept was previously separated into the EventParticipation and UserProfile concepts. The EventParticipation concept tracked the status of users in relation to an event, such as whether they showed interest, added a bookmark, or RSVP'ed. In order to simplify my concept and manage the overall workload, I thought it would be better suited to just have one general interest option for an event which collapses all of these different ways to show interest into just one overarching idea. Therefore, there is no longer a need for three different ways that have similar purposes.
+
+The UserInterest will also manage the personal interests that each user has. Since the interest option worked similarly for both events and any personal hobbies/interests that a user may have, the functionality is best grouped together and tied to a single user with a set of both item interests and personal interests, such as in this implementation.
+
+Initially, I was unsure of whether to separate this into two concepts such that I would introduce an EventParticipation concept along with a PersonalInterest concept. However, I believe it would be too ambitious to also track the event participation for each personal user alongside the status of events. It made more sense to mark interest for the purposes of this project, which is to provide event recommendations for users. Through this concept, the information relating to what kind of events a user might be interested in are very clear.
