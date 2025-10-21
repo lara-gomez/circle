@@ -65,13 +65,14 @@ export default class EventConcept {
   }: {
     organizer: User;
     name: string;
-    date: Date;
+    date: string;
     duration: number;
     location: string;
     description: string;
   }): Promise<{ event: Event } | { error: string }> {
+    const parsedDate = new Date(date);
     const currentTime = new Date();
-    if (date.getTime() < currentTime.getTime()) {
+    if (parsedDate.getTime() < currentTime.getTime()) {
       return { error: "Event date cannot be in the past." };
     }
     if (!name.trim()) {
@@ -92,7 +93,7 @@ export default class EventConcept {
       _id: eventId,
       organizer,
       name,
-      date,
+      date: parsedDate,
       duration,
       location,
       description,
@@ -121,12 +122,13 @@ export default class EventConcept {
     organizer: User;
     event: Event;
     newName: string;
-    newDate: Date;
+    newDate: string;
     newDuration: number;
     newLocation: string;
     newDescription: string;
   }): Promise<{ event: Event } | { error: string }> {
     const existingEvent = await this.events.findOne({ _id: eventId });
+    const newParsedDate = new Date(newDate);
     if (!existingEvent) {
       return { error: `Event with ID ${eventId} not found.` };
     }
@@ -146,7 +148,7 @@ export default class EventConcept {
       return { error: "New event duration must be a positive number of minutes." };
     }
     const currentTime = new Date();
-    if (newDate.getTime() < currentTime.getTime()) {
+    if (newParsedDate.getTime() < currentTime.getTime()) {
       return { error: "New event date cannot be in the past." };
     }
 
@@ -154,7 +156,7 @@ export default class EventConcept {
     // Note: Date comparison needs to be precise.
     if (
       newName === existingEvent.name &&
-      newDate.getTime() === existingEvent.date.getTime() &&
+      newParsedDate.getTime() === existingEvent.date.getTime() &&
       newDuration === existingEvent.duration &&
       newLocation === existingEvent.location &&
       newDescription === existingEvent.description
@@ -167,7 +169,7 @@ export default class EventConcept {
       {
         $set: {
           name: newName,
-          date: newDate,
+          date: newParsedDate,
           duration: newDuration,
           location: newLocation,
           description: newDescription,

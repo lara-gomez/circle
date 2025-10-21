@@ -10,12 +10,6 @@
 
 [@user-authentication](../UserAuthentication/UserAuthentication.md)
 
-[@event](../Event/Event.md)
-
-[@friending](../Friending/Friending.md)
-
-[@reviewing](../Reviewing/Reviewing.md)
-
 # concept: UserInterest \[User]
 
 *   **concept**: UserInterest \[User, Item]

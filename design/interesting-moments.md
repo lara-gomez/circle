@@ -23,6 +23,6 @@ In the friending concept, some of the actions had multiple requires clauses, suc
 In the event testing, the majority of it was originally reliant on using the Date.now() function. Originally, context had prompted me to wait 1 minute in real time to test the duration and ability to cancel and uncancel events due to the precondition. It interestingly didn't direct me to modify my requires to only allow modifying events that have not already occured. I suggested finding a way to work around using past dates, which prompted the context to direclty modify the database and the dates that were input in association to events.
 
 
-## Interest Moment 4: Brainstomring Recommending
+## Interest Moment 5: Brainstomring Recommending
 
 I provided the llm with access to my previous application pitch, which was helpful in giving overall feedback for all of my concepts in unison. One major component of my application is recommending events, and i was unsure where to include them. Providing the rubric greatly helped think about which concept the recommend action would fit into, and it recommedning creating a new concept which i will implement in the next iteration, basing it on my assignment 3 implementation.
