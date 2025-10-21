@@ -27,7 +27,7 @@ Deno.test("EventConcept: Principle - User organizes, tracks, and manages event l
     const createResult1 = await eventConcept.createEvent({
       organizer: organizerA,
       name: "Team Meeting",
-      date: futureDate1,
+      date: futureDate1.toISOString(),
       duration: duration1,
       location: "Online",
       description: "Discuss Q3 strategy.",
@@ -45,7 +45,7 @@ Deno.test("EventConcept: Principle - User organizes, tracks, and manages event l
     const createResult2 = await eventConcept.createEvent({
       organizer: organizerA,
       name: "Past Workshop Candidate",
-      date: futureDate2, // Created in the future
+      date: futureDate2.toISOString(), // Created in the future
       duration: duration2,
       location: "Conference Room",
       description: "Review last quarter's performance.",
@@ -112,7 +112,7 @@ Deno.test("Action: createEvent - success and validation", async () => {
     const createResult = await eventConcept.createEvent({
       organizer: organizerA,
       name: "New Event",
-      date: futureDate,
+      date: futureDate.toISOString(),
       duration: 60,
       location: "Venue",
       description: "Description",
@@ -133,7 +133,7 @@ Deno.test("Action: createEvent - success and validation", async () => {
     const pastDateResult = await eventConcept.createEvent({
       organizer: organizerA,
       name: "Past Event",
-      date: pastDate,
+      date: pastDate.toISOString(),
       duration: 30,
       location: "Here",
       description: "Details",
@@ -145,7 +145,7 @@ Deno.test("Action: createEvent - success and validation", async () => {
     const emptyNameResult = await eventConcept.createEvent({
       organizer: organizerA,
       name: "",
-      date: futureDate,
+      date: futureDate.toISOString(),
       duration: 30,
       location: "Here",
       description: "Details",
@@ -158,7 +158,7 @@ Deno.test("Action: createEvent - success and validation", async () => {
     const zeroDurationResult = await eventConcept.createEvent({
       organizer: organizerA,
       name: "Test",
-      date: futureDate,
+      date: futureDate.toISOString(),
       duration: 0,
       location: "Here",
       description: "Details",
@@ -169,7 +169,7 @@ Deno.test("Action: createEvent - success and validation", async () => {
     const negativeDurationResult = await eventConcept.createEvent({
       organizer: organizerA,
       name: "Test",
-      date: futureDate,
+      date: futureDate.toISOString(),
       duration: -10,
       location: "Here",
       description: "Details",
@@ -195,7 +195,7 @@ Deno.test("Action: modifyEvent - success and validation", async () => {
     const createResult = await eventConcept.createEvent({
       organizer: organizerA,
       name: "Old Name",
-      date: initialDate,
+      date: initialDate.toISOString(),
       duration: 60,
       location: "Old Location",
       description: "Old Description",
@@ -207,7 +207,7 @@ Deno.test("Action: modifyEvent - success and validation", async () => {
       organizer: organizerA,
       event: eventId,
       newName: "New Name",
-      newDate: newDate,
+      newDate: newDate.toISOString(),
       newDuration: 90,
       newLocation: "New Location",
       newDescription: "New Description",
@@ -226,7 +226,7 @@ Deno.test("Action: modifyEvent - success and validation", async () => {
       organizer: otherUserB, // Different user
       event: eventId,
       newName: "Attempted Name",
-      newDate: newDate,
+      newDate: newDate.toISOString(),
       newDuration: 90,
       newLocation: "New Location",
       newDescription: "New Description",
@@ -241,7 +241,7 @@ Deno.test("Action: modifyEvent - success and validation", async () => {
       organizer: organizerA,
       event: eventId,
       newName: currentEventState.name,
-      newDate: currentEventState.date,
+      newDate: currentEventState.date.toISOString(),
       newDuration: currentEventState.duration,
       newLocation: currentEventState.location,
       newDescription: currentEventState.description,
@@ -255,7 +255,7 @@ Deno.test("Action: modifyEvent - success and validation", async () => {
       organizer: organizerA,
       event: eventId,
       newName: "Name",
-      newDate: pastNewDate,
+      newDate: pastNewDate.toISOString(),
       newDuration: 90,
       newLocation: "Location",
       newDescription: "Description",
@@ -269,7 +269,7 @@ Deno.test("Action: modifyEvent - success and validation", async () => {
       organizer: organizerA,
       event: eventId,
       newName: "",
-      newDate: newDate,
+      newDate: newDate.toISOString(),
       newDuration: 90,
       newLocation: "Location",
       newDescription: "Description",
@@ -282,7 +282,7 @@ Deno.test("Action: modifyEvent - success and validation", async () => {
       organizer: organizerA,
       event: eventId,
       newName: "Name",
-      newDate: newDate,
+      newDate: newDate.toISOString(),
       newDuration: 0,
       newLocation: "Location",
       newDescription: "Description",
@@ -305,7 +305,7 @@ Deno.test("Action: cancelEvent - success and validation", async () => {
     const createResult = await eventConcept.createEvent({
       organizer: organizerA,
       name: "Cancel Test",
-      date: futureDate,
+      date: futureDate.toISOString(),
       duration: 60,
       location: "Online",
       description: "Desc",
@@ -339,7 +339,7 @@ Deno.test("Action: cancelEvent - success and validation", async () => {
     const createResult2 = await eventConcept.createEvent({
       organizer: organizerA,
       name: "Event for completing before cancelling",
-      date: eventForCompletionDate,
+      date: eventForCompletionDate.toISOString(),
       duration: eventForCompletionDuration,
       location: "Somewhere",
       description: "Past",
@@ -376,7 +376,7 @@ Deno.test("Action: unCancelEvent - success and validation", async () => {
     const createResult = await eventConcept.createEvent({
       organizer: organizerA,
       name: "Uncancel Test",
-      date: futureDate,
+      date: futureDate.toISOString(),
       duration: durationShort,
       location: "Online",
       description: "Desc",
@@ -412,7 +412,7 @@ Deno.test("Action: unCancelEvent - success and validation", async () => {
     const createResult2 = await eventConcept.createEvent({
       organizer: organizerA,
       name: "Past Ended Event",
-      date: pastEndTestStart,
+      date: pastEndTestStart.toISOString(),
       duration: pastEndTestDuration,
       location: "Test",
       description: "Test",
@@ -442,7 +442,7 @@ Deno.test("Action: deleteEvent - success and validation", async () => {
     const createResult = await eventConcept.createEvent({
       organizer: organizerA,
       name: "Delete Test",
-      date: futureDate,
+      date: futureDate.toISOString(),
       duration: 60,
       location: "Online",
       description: "Desc",
@@ -469,7 +469,7 @@ Deno.test("Action: deleteEvent - success and validation", async () => {
     const createResult2 = await eventConcept.createEvent({
       organizer: organizerA,
       name: "Another Delete Test",
-      date: futureDate,
+      date: futureDate.toISOString(),
       duration: 60,
       location: "Offline",
       description: "Desc",
@@ -497,7 +497,7 @@ Deno.test("Action: system completeEvent - success and validation (efficient)", a
     const createResult1 = await eventConcept.createEvent({
       organizer: organizerA,
       name: "Future Event to Complete",
-      date: futureEventTimeShort,
+      date: futureEventTimeShort.toISOString(),
       duration: shortDuration,
       location: "Virtual",
       description: "Wait and complete",
@@ -532,7 +532,7 @@ Deno.test("Action: system completeEvent - success and validation (efficient)", a
     const createResult2 = await eventConcept.createEvent({
       organizer: organizerA,
       name: "Cancelled Event",
-      date: new Date(now.getTime() + 1 * 1000), // In the future initially
+      date: (new Date(now.getTime() + 1 * 1000)).toISOString(), // In the future initially
       duration: 1,
       location: "Anywhere",
       description: "Cancelled test",
@@ -563,11 +563,11 @@ Deno.test("Queries: _getEventById, _getEventsByOrganizer, _getEventsByStatus, _g
     const event3Date = new Date(now.getTime() + 30 * 1000); // 30 seconds from now
 
     // Create multiple events
-    const createRes1 = await eventConcept.createEvent({ organizer: organizerA, name: "A's Event 1", date: event1Date, duration: 30, location: "L1", description: "D1" });
+    const createRes1 = await eventConcept.createEvent({ organizer: organizerA, name: "A's Event 1", date: event1Date.toISOString(), duration: 30, location: "L1", description: "D1" });
     const { event: eventA1 } = createRes1 as { event: ID };
-    const createRes2 = await eventConcept.createEvent({ organizer: organizerA, name: "A's Event 2", date: event2Date, duration: 60, location: "L2", description: "D2" });
+    const createRes2 = await eventConcept.createEvent({ organizer: organizerA, name: "A's Event 2", date: event2Date.toISOString(), duration: 60, location: "L2", description: "D2" });
     const { event: eventA2 } = createRes2 as { event: ID };
-    const createRes3 = await eventConcept.createEvent({ organizer: otherUserB, name: "B's Event 1", date: event3Date, duration: 45, location: "L3", description: "D3" });
+    const createRes3 = await eventConcept.createEvent({ organizer: otherUserB, name: "B's Event 1", date: event3Date.toISOString(), duration: 45, location: "L3", description: "D3" });
     const { event: eventB1 } = createRes3 as { event: ID };
 
     // Cancel an event
