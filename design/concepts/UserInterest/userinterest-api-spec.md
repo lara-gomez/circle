@@ -218,4 +218,37 @@
   "error": "string"
 }
 ```
+
+### POST /api/UserInterest/_getUsersInterestedInItems
+
+**Description:** Retrieves all users interested in a given item.
+
+**Requirements:**
+- The item exists (implicitly, as the query will return an empty array if no interests are found for it).
+
+**Effects:**
+- Returns an array of dictionaries, each containing a 'user' field with the ID of a user interested in the item.
+
+**Request Body:**
+```json
+{
+  "item": "ID"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "user": "ID"
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
 ---
