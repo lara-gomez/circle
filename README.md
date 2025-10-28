@@ -1,8 +1,153 @@
-# 6.104 Assignment 4: Implementing Concepts
+# Circle
 
-In this assignment, you'll begin creating your backend by implementing your concepts in TypeScript. You'll learn to use Context, a simple CLI tool and a new way to both collaborate with LLMs and drive your implementation through design.
+**Circle** is a social event discovery platform that connects users with meaningful experiences through mutual friendships and shared interests.
+
+## Project Overview
+
+Circle helps users discover and organize events within their social network. Users can create events, connect with friends, express interests in activities and topics, and provide reviews on events they've attended. The application leverages concept-based design to create modular, reusable components that work together to deliver a cohesive user experience.
+
+## Project Structure
+
+- **`design/concepts/`** - Detailed concept specifications for all concepts
+- **`design/learning/`** - Design documentation and learning notes for each concept
+- **`design/interesting-moments.md`** - Key insights and challenges encountered during development
+- **`design/updated-design.md`** - Design updates between Assignment 4a and 4b
+- **`src/concepts/`** - TypeScript implementation of all concepts
+- **`src/concept_server.ts`** - Main server file for running the application
+
+## Quick Start
+
+### Running the Application
+```shell
+deno task concepts
+```
+The server will start on `localhost:8000`
+
+### Running Tests
+```shell
+deno test -A
+```
+This will run all concept tests with all permissions enabled.
+
+## Concepts
+
+Circle is built on six core concepts that work together to create a comprehensive social event platform:
+
+### Event [User]
+**Purpose**: Enable users to organize, track, and facilitate the discovery of time-bound occurrences.
+
+Events allow users to create, modify, cancel, and delete social gatherings. Each event has essential details like name, date, time, location, and description. Events automatically transition to "completed" status after they occur, and organizers can cancel and restore events as needed.
+
+**Key Actions**:
+- `createEvent` - Create a new event with details
+- `modifyEvent` - Update event information
+- `cancelEvent` / `unCancelEvent` - Manage event cancellation
+- `deleteEvent` - Remove an event from the system
+- `completeEvent` (system) - Automatically mark past events as completed
+
+**Implementation**: [`src/concepts/Event/EventConcept.ts`](src/concepts/Event/EventConcept.ts)  
+**Specification**: [`design/concepts/Event/Event.md`](design/concepts/Event/Event.md)  
+**Design Notes**: [`design/learning/EventDesign.md`](design/learning/EventDesign.md)
+
+---
+
+### Friending [User]
+**Purpose**: Enable users to establish and manage mutual social connections.
+
+The Friending concept implements a request-based friendship system where users can send, accept, and remove friend requests. Once accepted, users become friends and can view each other's content and activities.
+
+**Key Actions**:
+- `sendFriendRequest` - Send a friend request to another user
+- `acceptFriendRequest` - Accept an incoming friend request
+- `removeFriendRequest` - Remove a pending friend request
+- `removeFriend` - End a friendship
+
+**Implementation**: [`src/concepts/Friending/FriendingConcept.ts`](src/concepts/Friending/FriendingConcept.ts)  
+**Specification**: [`design/concepts/Friending/Friending.md`](design/concepts/Friending/Friending.md)  
+**Design Notes**: [`design/learning/FriendingDesign.md`](design/learning/FriendingDesign.md)
+
+---
+
+### UserInterest [User, Item]
+**Purpose**: Enable users to explicitly declare and manage their interests to personalize their experience.
+
+Users can express interests in two ways: through personal interest tags (like "music", "sports") and by marking interest in specific items (events). This dual approach enables both broad and specific interest tracking.
+
+**Key Actions**:
+- `addPersonalInterest` / `removePersonalInterest` - Manage interest tags
+- `addItemInterest` / `removeItemInterest` - Mark interest in specific items
+
+**Implementation**: [`src/concepts/UserInterest/UserInterestConcept.ts`](src/concepts/UserInterest/UserInterestConcept.ts)  
+**Specification**: [`design/concepts/UserInterest/UserInterest.md`](design/concepts/UserInterest/UserInterest.md)  
+**Design Notes**: [`design/learning/UserInterestDesign.md`](design/learning/UserInterestDesign.md)
+
+---
+
+### Reviewing [User, Item]
+**Purpose**: Enable users to provide qualitative and quantitative feedback on items.
+
+Users can create, modify, and delete reviews for items (such as events) with both a numerical rating (0-10) and written feedback. This helps other users make informed decisions about attending events.
+
+**Key Actions**:
+- `addReview` - Create a review with rating and text
+- `modifyReview` - Update an existing review
+- `removeReview` - Delete a review
+
+**Implementation**: [`src/concepts/Reviewing/ReviewingConcept.ts`](src/concepts/Reviewing/ReviewingConcept.ts)  
+**Specification**: [`design/concepts/Reviewing/Reviewing.md`](design/concepts/Reviewing/Reviewing.md)  
+**Design Notes**: [`design/learning/ReviewingDesign.md`](design/learning/ReviewingDesign.md)
+
+---
+
+### UserAuthentication [User]
+**Purpose**: Enable users to register and verify their identity using a username and password.
+
+Handles user registration and authentication, ensuring unique usernames and secure credential verification.
+
+**Key Actions**:
+- `register` - Create a new user account
+- `authenticate` - Verify user credentials
+
+**Implementation**: [`src/concepts/UserAuthentication/UserAuthenticationConcept.ts`](src/concepts/UserAuthentication/UserAuthenticationConcept.ts)  
+**Specification**: [`design/concepts/UserAuthentication/UserAuthentication.md`](design/concepts/UserAuthentication/UserAuthentication.md)  
+**Design Notes**: [`design/learning/UserAuthenticationDesign.md`](design/learning/UserAuthenticationDesign.md)
+
+---
+
+### LikertSurvey (Sample Concept)
+**Purpose**: Enable collection of opinion data using Likert-scale questions.
+
+This is a sample concept included for demonstration purposes. It shows how to implement survey-style data collection with scale-based responses.
+
+**Implementation**: [`src/concepts/LikertSurvey/LikertSurveyConcept.ts`](src/concepts/LikertSurvey/LikertSurveyConcept.ts)  
+**Specification**: [`design/concepts/LikertSurvey/LikertSurvey.md`](design/concepts/LikertSurvey/LikertSurvey.md)
+
+---
+
+## Documentation & Resources
+
+### Design Evolution
+- **`design/updated-design.md`** - Documents the design refinements made between Assignment 4a and 4b
+- **`design/interesting-moments.md`** - Chronicles key insights and challenges from the development process, including:
+  - TypeScript type resolution issues
+  - Testing strategy refinements
+  - Precondition ordering considerations
+  - Event testing with date handling
+  - Recommending concept brainstorming
+
+### API Specifications
+Each concept has a detailed API specification document:
+- [`design/concepts/Event/event-api-spec.md`](design/concepts/Event/event-api-spec.md)
+- [`design/concepts/Friending/friending-api-spec.md`](design/concepts/Friending/friending-api-spec.md)
+- [`design/concepts/Reviewing/reviewing-api-spec.md`](design/concepts/Reviewing/reviewing-api-spec.md)
+- [`design/concepts/UserAuthentication/userauth-api-spec.md`](design/concepts/UserAuthentication/userauth-api-spec.md)
+- [`design/concepts/UserInterest/userinterest-api-spec.md`](design/concepts/UserInterest/userinterest-api-spec.md)
+
+---
 
 # Setup (Prep)
+
+This project was created as part of 6.104 Assignment 4: Implementing Concepts. Below are the setup instructions for working with the Context tool and running the Circle application.
 
 ## 0. Fork this repository
 
@@ -135,40 +280,56 @@ Inside the `steps` directory one layer deeper are granular files of the form `st
 4. Use Context to save `exercise-0` as well. (Optional): delete any of these files - if you've properly saved/prompted, we'll be able to find it in the context. We encourage you to continue to prompt/save your brainstorming and learning, and they will help with finding interesting moments for your assignment!
 
 **Note:** `ctx save` is only necessary if you manually edit files, such as your second response to `questioning` or your solutions that you copy paste into `exercise-0`. Any time you `ctx prompt`, both the before and after versions are automatically saved.
-# Implementing concepts
+# Working with Circle
 
-You're now ready to create the context that you need to implement concepts with (or without) the aid of an LLM! We've provided you with a number of documents/prompts in `design/background`, each its own self-contained bit of knowledge about concept design in general and implementing them in TypeScript. 
+This project uses the Context tool for design and development. All design documents and implementation notes are organized in the `design/` directory and can be explored using the Context CLI.
 
-- `design/background`: Background knowledge that you should treat as both prompts and documentation for you to read about concept design. Feel free to add any additional background documents that you think are good prompts. Also, if you think you can contribute, you may also edit any existing prompts and point them out!
-- `design/brainstorm`: Plan, chat with an LLM, use as a scratch pad - create and synthesize context about your potential ideas.
-- `design/concepts`: Place your actual concept spec documents here. Feel free to copy a whole document from `brainstorm` if you started there and trim down, or simply mutate in place (with `ctx prompt` or `ctx save` throughout).
-- `design/learning`: When you feel like you've learned something significant, such as important decisions or caveats/challenges you encounter, record them here. **Tip:** you can always copy an entire document from another place (like `brainstorm`), add a `# summarize: extract the important lessons from everything above`, followed by a `ctx prompt`, then simply delete the original parts.
+## Design Documentation
 
-### Task:
+- **`design/background`**: Background knowledge about concept design and TypeScript implementation
+- **`design/brainstorming`**: Early brainstorming and ideation for each concept
+- **`design/concepts`**: Formal concept specifications for all implemented concepts
+- **`design/learning`**: Key learnings and design decisions for each concept
+- **`design/interesting-moments.md`**: Important insights from the development process
+- **`design/updated-design.md`**: Changes made between Assignment 4a and 4b
 
-Implement your concepts, either using LLM assistance through `ctx prompt`, or implementing by hand and documenting your progress with `ctx save`. The following tips may help:
+## Development Process
 
-### Sample concept: LikertSurvey
+Circle was developed using concept-based design with LLM assistance through the Context tool. Each concept follows a rigorous design-to-implementation process:
 
-We've included a sample concept called LikertSurvey. This is a different version than shown in lecture, where the specification itself was also completely generated. You can inspect `design/concepts/LikertSurvey` to see exactly how this was done, and its history in `context`. This concept is saved, so feel free to delete the design or the source code (useful to delete at least the testing file to prevent it from running when you execute all tests). 
+1. **Specification** - Define the concept's purpose, state, actions, and principles
+2. **Implementation** - Translate the specification to TypeScript with MongoDB
+3. **Testing** - Create comprehensive tests to validate the concept's behavior
 
-**Generated concept:** notice that `LikertSurvey/LikertSurvey.md` is actually a link pointing to the specific **step** of that previous generation in the context! This is also an embedded link, meaning that Obsidian previews it for you automatically. You can upgrade any link to an embedded link by putting an `!` in front of it, and as long as you still have the `@` sign in the link text, Context will treat it as an include all the same.
-
-### Implementation
-
-Look around the background folder and see which might help you implement concepts, depending on how much of an existing design you already have. The `LikertSurvey/implementation` document gives one example of how this was done. The file that contains most of the information about the technical details of concept implementations is `implementing-concepts.md`.
 ### Testing
 
-You can read about testing in `testing-concepts.md`. In general, we're using all the standard options, and for testing the current prompts use the [Deno testing framework](https://docs.deno.com/runtime/fundamentals/testing/). Tests are defined by any file with the name `filename.test.ts` in your directory. To run all tests, simply run:
+All concepts include comprehensive test suites that verify:
+- Basic operations and CRUD functionality
+- Precondition enforcement
+- Edge cases and error handling
+- Operational principles
+
+To run all tests:
 
 ```shell
 deno test -A
 ```
 
-where the `-A` flag means to give all permissions. Be careful with this - it's convenient, but Deno's default security model helps you find if a package you import is sneakily trying to do something your program doesn't (like load local files). There's plenty of [documentation](https://docs.deno.com/runtime/fundamentals/security/) about a more scoped approach to this.
+The `-A` flag grants all permissions. For more granular permission control, see [Deno's security documentation](https://docs.deno.com/runtime/fundamentals/security/).
 
-**Confirming your setup:** run the command above to make sure that you've configured everything correctly. You should see in your MongoDB Atlas console the created collections in the test database! These are temporary and will be wiped every time you start a new test.
-### Tips for including code
+To run tests for a specific concept:
+
+```shell
+deno test -A src/concepts/Event/EventConcept.test.ts
+deno test -A src/concepts/Friending/FriendingConcept.test.ts
+deno test -A src/concepts/Reviewing/ReviewingConcept.test.ts
+deno test -A src/concepts/UserAuthentication/UserAuthenticationConcept.test.ts
+deno test -A src/concepts/UserInterest/UserInterestConcept.test.ts
+```
+
+**Note**: Tests use temporary MongoDB collections that are wiped clean before each test run.
+
+### Tips for including code in Context
 
 Since `.ts` files don't show up in Obsidian, VSCode has a similar option where you can right/ctrl click a code file, and `Copy Relative Path` to get a repo-based link to include in your context. 
 
