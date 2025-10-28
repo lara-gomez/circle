@@ -1,5 +1,5 @@
 ```
-running 8 tests from ./src/concepts/Event/EventConcept.test.ts
+running 9 tests from ./src/concepts/Event/EventConcept.test.ts
 
 
 EventConcept: Principle - User organizes, tracks, and manages event lifecycle (efficient) ...
@@ -125,6 +125,97 @@ Query: _getAllEvents
 
 Queries: _getEventById, _getEventsByOrganizer, _getEventsByStatus, _getAllEvents ... ok (1s)
 
-ok | 8 passed | 0 failed (8s)
+Query: _getEventsByRecommendationContext - AI output verification ...
+
+------- output -------
+
+--- Testing _getEventsByRecommendationContext Query ---
+
+Test Case 1: LLM recommends existing events.
+🤖 Requesting AI-augmented recommendations from LLM...
+
+--- MockLLM Called ---
+MockLLM Response: {"recommendations":[{"name":"AI & ML Summit","reason":"Matches AI interest and virtual format."},{"name":"Tech Conference 2024","reason":"Relevant for tech and workshops."}]}
+✅ Received response from LLM!
+
+🤖 RAW LLM RESPONSE
+======================
+{"recommendations":[{"name":"AI & ML Summit","reason":"Matches AI interest and virtual format."},{"name":"Tech Conference 2024","reason":"Relevant for tech and workshops."}]}
+======================
+
+📝 Applying LLM recommendations...
+✅ Recommended "AI & ML Summit" (Matches AI interest and virtual format.)
+✅ Recommended "Tech Conference 2024" (Relevant for tech and workshops.)
+Success: LLM correctly identified and returned existing events.
+
+Test Case 2: LLM recommends non-existent event (should be filtered).
+🤖 Requesting AI-augmented recommendations from LLM...
+
+--- MockLLM Called ---
+MockLLM Response: {"recommendations":[{"name":"Non-existent Gala","reason":"User might like galas."},{"name":"Web Dev Meetup","reason":"Relevant for web development."}]}
+✅ Received response from LLM!
+
+🤖 RAW LLM RESPONSE
+======================
+{"recommendations":[{"name":"Non-existent Gala","reason":"User might like galas."},{"name":"Web Dev Meetup","reason":"Relevant for web development."}]}
+======================
+
+📝 Applying LLM recommendations...
+✅ Recommended "Web Dev Meetup" (Relevant for web development.)
+LLM provided disallowed recommendations. Returning only valid ones. Issues:
+- No available event named "Non-existent Gala" to recommend.
+Success: Non-existent event from LLM output was filtered out.
+
+Test Case 3: LLM returns malformed JSON.
+🤖 Requesting AI-augmented recommendations from LLM...
+
+--- MockLLM Called ---
+MockLLM Response: This is not JSON.
+✅ Received response from LLM!
+
+🤖 RAW LLM RESPONSE
+======================
+This is not JSON.
+======================
+
+No JSON found in response: This is not JSON.
+Failure: Malformed JSON from LLM handled gracefully. Message: {"error":"Failed to get recommendations: Failed to parse LLM response"}
+
+Test Case 4: LLM returns valid JSON but with invalid 'recommendations' field.
+🤖 Requesting AI-augmented recommendations from LLM...
+
+--- MockLLM Called ---
+MockLLM Response: {"invalidField":"some data","recommendations":"not an array"}
+✅ Received response from LLM!
+
+🤖 RAW LLM RESPONSE
+======================
+{"invalidField":"some data","recommendations":"not an array"}
+======================
+
+Invalid response format: "recommendations" array not found.
+Failure: Invalid 'recommendations' field handled gracefully. Message: {"error":"Failed to get recommendations: Failed to parse LLM response"}
+
+Test Case 5: LLM returns valid JSON but with missing 'name' in recommendation.
+🤖 Requesting AI-augmented recommendations from LLM...
+
+--- MockLLM Called ---
+MockLLM Response: {"recommendations":[{"reason":"Missing name"},{"name":"Local Charity Run","reason":"Valid event"}]}
+✅ Received response from LLM!
+
+🤖 RAW LLM RESPONSE
+======================
+{"recommendations":[{"reason":"Missing name"},{"name":"Local Charity Run","reason":"Valid event"}]}
+======================
+
+📝 Applying LLM recommendations...
+✅ Recommended "Local Charity Run" (Valid event)
+LLM provided disallowed recommendations. Returning only valid ones. Issues:
+- Recommendation is missing a valid event name.
+Success: LLM recommendations with missing 'name' handled by returning only valid ones.
+----- output end -----
+Query: _getEventsByRecommendationContext - AI output verification ... ok (819ms)
+
+ok | 9 passed | 0 failed (9s)
 
 ```

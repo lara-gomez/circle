@@ -404,3 +404,47 @@
   "error": "string"
 }
 ```
+
+---
+
+### POST /api/Event/getEventsByRecommendationContext
+
+**Description:** Returns a list of events according to the given filters and priorities, sorted by relevance, utilizing AI-augmented recommendations.
+
+**Requirements:**
+- true
+
+**Effects:**
+- returns a list of events according to the given filters and priorities, sorted by relevance
+
+**Request Body:**
+```json
+{
+  "user": "string",
+  "filters": "string",
+  "priorities": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "_id": "string",
+    "organizer": "string",
+    "name": "string",
+    "date": "string (ISO 8601 DateTime)",
+    "duration": "number",
+    "location": "string",
+    "description": "string",
+    "status": "string (enum: \"upcoming\" | \"cancelled\" | \"completed\")"
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```

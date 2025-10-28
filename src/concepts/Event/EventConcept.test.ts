@@ -6,7 +6,32 @@ import EventConcept from "./EventConcept.ts";
 const organizerA = "user:Alice" as ID;
 const otherUserB = "user:Bob" as ID;
 
-// Removed sleep helper for long durations.
+// Define a basic interface for the LLM to allow mocking
+interface LLM {
+  executeLLM(prompt: string): Promise<string>;
+}
+
+// Mock LLM class for testing purposes
+class MockLLM implements LLM {
+  private mockResponses: string[] = [];
+  
+  setResponse(response: string | string[]) {
+    this.mockResponses = Array.isArray(response) ? response : [response];
+  }
+
+  async executeLLM(prompt: string): Promise<string> {
+    console.log("\n--- MockLLM Called ---");
+    // console.log("Prompt (truncated):", prompt.substring(0, 200) + "..."); // Useful for debugging prompts
+    if (this.mockResponses.length > 0) {
+      const response = this.mockResponses.shift()!; // Return and remove the first mock response
+      console.log("MockLLM Response:", response);
+      return Promise.resolve(response);
+    }
+    console.log("MockLLM: No specific response set, returning empty recommendations.");
+    return Promise.resolve(JSON.stringify({ recommendations: [] })); // Default empty response
+  }
+}
+
 // For time-sensitive tests, we'll manipulate the event's 'date' in the DB directly.
 
 Deno.test("EventConcept: Principle - User organizes, tracks, and manages event lifecycle (efficient)", async () => {
@@ -622,6 +647,132 @@ Deno.test("Queries: _getEventById, _getEventsByOrganizer, _getEventsByStatus, _g
     const allEvents = await eventConcept._getAllEvents();
     assertEquals(allEvents.length, 3);
     assertArrayIncludes(allEvents.map(e => e._id), [eventA1, eventA2, eventB1]);
+  } finally {
+    await client.close();
+  }
+});
+
+Deno.test("Query: _getEventsByRecommendationContext - AI output verification", async () => {
+  const [db, client] = await testDb();
+  const mockLLM = new MockLLM();
+  const eventConcept = new EventConcept(db, mockLLM); // Inject mock LLM
+
+  try {
+    console.log("\n--- Testing _getEventsByRecommendationContext Query ---");
+
+    const now = new Date();
+    // Create several candidate events
+    const event1Date = new Date(now.getTime() + 10 * 60 * 1000);
+    const event2Date = new Date(now.getTime() + 20 * 60 * 1000);
+    const event3Date = new Date(now.getTime() + 30 * 60 * 1000);
+    const event4Date = new Date(now.getTime() + 40 * 60 * 1000);
+
+    const createRes1 = await eventConcept.createEvent({ organizer: organizerA, name: "Tech Conference 2024", date: event1Date.toISOString(), duration: 180, location: "Convention Center", description: "Annual tech conference with workshops." });
+    const { event: event1Id } = createRes1 as { event: ID };
+    const createRes2 = await eventConcept.createEvent({ organizer: organizerA, name: "Local Charity Run", date: event2Date.toISOString(), duration: 60, location: "City Park", description: "Fun run for a good cause." });
+    const { event: event2Id } = createRes2 as { event: ID };
+    const createRes3 = await eventConcept.createEvent({ organizer: otherUserB, name: "Web Dev Meetup", date: event3Date.toISOString(), duration: 90, location: "Tech Hub", description: "Monthly meetup on front-end development." });
+    const { event: event3Id } = createRes3 as { event: ID };
+    const createRes4 = await eventConcept.createEvent({ organizer: organizerA, name: "AI & ML Summit", date: event4Date.toISOString(), duration: 240, location: "Virtual", description: "Explore the latest in Artificial Intelligence." });
+    const { event: event4Id } = createRes4 as { event: ID };
+
+    const allEvents = await eventConcept._getAllEvents();
+    assertEquals(allEvents.length, 4, "Setup: Should have 4 events in DB.");
+
+    // Test Case 1: Valid recommendation from LLM
+    console.log("Test Case 1: LLM recommends existing events.");
+    const llmResponse1 = JSON.stringify({
+      recommendations: [
+        { name: "AI & ML Summit", reason: "Matches AI interest and virtual format." },
+        { name: "Tech Conference 2024", reason: "Relevant for tech and workshops." },
+      ],
+    });
+    mockLLM.setResponse(llmResponse1);
+
+    const recommendations1 = await eventConcept._getEventsByRecommendationContext({
+      user: organizerA,
+      filters: "AI, tech",
+      priorities: "virtual, workshops",
+    });
+    assertNotEquals("error" in recommendations1, true, `Expected success, got error: ${JSON.stringify(recommendations1)}`);
+    const recs1 = recommendations1 as Array<{ name: string }>;
+    assertEquals(recs1.length, 2, "Should return 2 recommended events.");
+    assertEquals(recs1[0].name, "AI & ML Summit", "First recommendation should be AI & ML Summit.");
+    assertEquals(recs1[1].name, "Tech Conference 2024", "Second recommendation should be Tech Conference 2024.");
+    console.log("Success: LLM correctly identified and returned existing events.");
+
+    // Test Case 2: LLM recommends a non-existent event (should be filtered out)
+    console.log("Test Case 2: LLM recommends non-existent event (should be filtered).");
+    const llmResponse2 = JSON.stringify({
+      recommendations: [
+        { name: "Non-existent Gala", reason: "User might like galas." }, // This event does not exist
+        { name: "Web Dev Meetup", reason: "Relevant for web development." },
+      ],
+    });
+    mockLLM.setResponse(llmResponse2);
+
+    const recommendations2 = await eventConcept._getEventsByRecommendationContext({
+      user: organizerA,
+      filters: "web dev",
+      priorities: "meetups",
+    });
+    assertNotEquals("error" in recommendations2, true, `Expected success, got error: ${JSON.stringify(recommendations2)}`);
+    const recs2 = recommendations2 as Array<{ name: string }>;
+    assertEquals(recs2.length, 1, "Should return only 1 valid recommended event (non-existent ignored).");
+    assertEquals(recs2[0].name, "Web Dev Meetup", "Only the existing event should be recommended.");
+    console.log("Success: Non-existent event from LLM output was filtered out.");
+
+
+    // Test Case 3: LLM returns malformed JSON or invalid structure
+    console.log("Test Case 3: LLM returns malformed JSON.");
+    const llmResponse3 = "This is not JSON.";
+    mockLLM.setResponse(llmResponse3);
+
+    const recommendations3 = await eventConcept._getEventsByRecommendationContext({
+      user: organizerA,
+      filters: "any",
+      priorities: "any",
+    });
+    assertEquals("error" in recommendations3, true, "Expected an error for malformed LLM response.");
+    assertEquals((recommendations3 as { error: string }).error.includes("Failed to get recommendations"), true, "Error message should indicate parsing failure.");
+    console.log(`Failure: Malformed JSON from LLM handled gracefully. Message: ${JSON.stringify(recommendations3)}`);
+
+    console.log("Test Case 4: LLM returns valid JSON but with invalid 'recommendations' field.");
+    const llmResponse4 = JSON.stringify({
+      invalidField: "some data",
+      recommendations: "not an array", // Invalid type
+    });
+    mockLLM.setResponse(llmResponse4);
+
+    const recommendations4 = await eventConcept._getEventsByRecommendationContext({
+      user: organizerA,
+      filters: "any",
+      priorities: "any",
+    });
+    assertEquals("error" in recommendations4, true, "Expected an error for invalid recommendations field.");
+    assertEquals((recommendations4 as { error: string }).error.includes("Failed to get recommendations"), true, "Error message should indicate parsing failure.");
+    console.log(`Failure: Invalid 'recommendations' field handled gracefully. Message: ${JSON.stringify(recommendations4)}`);
+
+    console.log("Test Case 5: LLM returns valid JSON but with missing 'name' in recommendation.");
+    const llmResponse5 = JSON.stringify({
+      recommendations: [
+        { reason: "Missing name" },
+        { name: "Local Charity Run", reason: "Valid event" }
+      ],
+    });
+    mockLLM.setResponse(llmResponse5);
+
+    const recommendations5 = await eventConcept._getEventsByRecommendationContext({
+      user: organizerA,
+      filters: "charity",
+      priorities: "community",
+    });
+    assertNotEquals("error" in recommendations5, true, `Expected success with partial recommendations, got error: ${JSON.stringify(recommendations5)}`);
+    const recs5 = recommendations5 as Array<{ name: string }>;
+    assertEquals(recs5.length, 1, "Should return only the valid recommendation.");
+    assertEquals(recs5[0].name, "Local Charity Run", "Only the event with a valid name should be returned.");
+    console.log("Success: LLM recommendations with missing 'name' handled by returning only valid ones.");
+
   } finally {
     await client.close();
   }

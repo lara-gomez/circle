@@ -1,6 +1,7 @@
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
+import { GeminiLLM } from './gemini-llm.ts'; // Assume this exists and is properly imported
 
 // Collection prefix to ensure namespace separation
 const PREFIX = "Event" + ".";
@@ -25,17 +26,34 @@ interface EventDoc {
   status: "upcoming" | "cancelled" | "completed";
 }
 
+// Define a basic interface for the LLM to allow mocking in tests
+interface LLM {
+  executeLLM(prompt: string): Promise<string>;
+}
+
+
 /**
  * @concept Event
- * @purpose enable users to organize and track time-bound occurrences, providing clear and up-to-date information about what, when, and where something will happen
+ * @purpose enable users to organize, track, and facilitate the discovery of time-bound occurrences, 
+ * providing clear and up-to-date information about what, when, and where something will happen
  *
- * @principle A user can schedule an event by providing essential details such as its name, date, time, location, and description. This information ensures clarity for all involved about the planned occurrence. After the scheduled time, the event naturally transitions to a completed state, automatically reflecting its conclusion. The organizer retains the ability to cancel an event beforehand if plans change, with the flexibility to restore it if circumstances reverse. Organizers may also choose to delete events from the system.
+ * @principle A user can schedule an event by providing essential details such as its name, date, 
+ * time, location, and description. This information ensures clarity for all involved about the 
+ * planned occurrence. After the scheduled time, the event naturally transitions to a completed state, 
+ * automatically reflecting its conclusion. The organizer retains the ability to cancel an event 
+ * beforehand if plans change, with the flexibility to restore it if circumstances reverse. Organizers 
+ * may also choose to delete events from the system. Additionally, the system can surface relevant 
+ * events by applying contextual filters and prioritizations to its stored event data, aiding in 
+ * personalized discovery.
  */
 export default class EventConcept {
   events: Collection<EventDoc>;
+  private llm: LLM; // Add a private field for the LLM
 
-  constructor(private readonly db: Db) {
+  // CORRECTED: Constructor now accepts an optional llmInstance
+  constructor(private readonly db: Db, llmInstance?: LLM) { // Optional LLM instance for dependency injection
     this.events = this.db.collection(PREFIX + "events");
+    this.llm = llmInstance || new GeminiLLM(); // Use provided instance or default
     // Add indexes for frequently queried fields to improve performance
     // These indexes will speed up queries by organizer (e.g., _getEventsByOrganizer)
     // and by status (e.g., _getEventsByStatus), as well as findOne operations on _id
@@ -122,13 +140,13 @@ export default class EventConcept {
     organizer: User;
     event: Event;
     newName: string;
-    newDate: string;
+    newDate: string | Date;
     newDuration: number;
     newLocation: string;
     newDescription: string;
   }): Promise<{ event: Event } | { error: string }> {
     const existingEvent = await this.events.findOne({ _id: eventId });
-    const newParsedDate = new Date(newDate);
+    const newParsedDate = newDate instanceof Date ? newDate : new Date(newDate); // Handle both Date object and string
     if (!existingEvent) {
       return { error: `Event with ID ${eventId} not found.` };
     }
@@ -345,5 +363,189 @@ export default class EventConcept {
    */
   async _getAllEvents(): Promise<EventDoc[]> {
     return await this.events.find({}).toArray();
+  }
+
+  /**
+   * Query: _getEventsByRecommendationContext (user: User, filters: String, priorities: String): (events: EventDoc[])
+   * 
+   * **requires**: true
+   * 
+   * **effects**: returns a list of events according to the given filters and priorities, sorted by relevance
+   */
+  async _getEventsByRecommendationContext({ user, filters, priorities }: { user: User; filters: string; priorities: string }): Promise<EventDoc[] | { error: string }> {
+    try {
+      console.log('🤖 Requesting AI-augmented recommendations from LLM...');
+            
+      const candidateEvents = await this.events.find({}).toArray();
+
+      if (candidateEvents.length === 0) {
+          console.log("⚠️ No events available.");
+          return [];
+      }
+
+      const prompt = this.createRecommendationPrompt(user, filters, priorities, candidateEvents);
+      const text = await this.llm.executeLLM(prompt);
+      
+      console.log('✅ Received response from LLM!');
+      console.log('\n🤖 RAW LLM RESPONSE');
+      console.log('======================');
+      console.log(text);
+      console.log('======================\n');
+        
+      // Parse and apply the assignments
+      const result = this.parseAndApplyRecommendations(text, candidateEvents);
+      if (result === null) {
+        return { error: "Failed to get recommendations: Failed to parse LLM response" };
+      }
+      return result;
+        
+    } catch (error) {
+        console.error('❌ Error in _getEventsByRecommendationContext:', (error as Error).message);
+        return { error: `Failed to get recommendations: ${(error as Error).message}` };
+    }
+  }
+
+  /**
+   * Create the prompt for Gemini based on user, filters, and priorities
+   */
+  private createRecommendationPrompt(user: User, filters: string, priorities: string, events: EventDoc[]): string {
+      const criticalRequirements = [
+          "1. Recommend events that match the given filters and priorities.",
+          "2. Consider the event's name, description, location, and date to identify alignment.",
+          "3. Prioritize events based on the given priorities string.",
+          "4. Apply the filters string to narrow down the event selection.",
+          "5. Rank events chronologically if they have equal relevance.",
+          "6. Return ONLY valid event names that appear in the candidate list."
+      ];
+
+      return `
+You are a helpful AI assistant that recommends events to users.
+
+USER: ${user}
+
+FILTERS: ${filters}
+
+PRIORITIES: ${priorities}
+
+CANDIDATE EVENTS (ONLY CHOOSE FROM THESE): 
+${this.eventsToString(events)}
+
+CRITICAL REQUIREMENTS:
+${criticalRequirements.join('\n')}
+
+Return your response as a JSON object with this exact structure:
+{
+"recommendations": [
+  {
+    "name": "exact event name from the list above",
+    "reason": "short explanation of why this event matches the filters and priorities"
+  }
+]
+}
+
+Return ONLY the JSON object, no additional text.`;
+
+  }
+
+  /**
+   * Parses the LLM response and applies the recommendations
+   */
+  private parseAndApplyRecommendations(responseText: string, candidateEvents: EventDoc[]): EventDoc[] | null {
+    try {
+      // Extract JSON from response (in case there's extra text)
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+          console.error('No JSON found in response:', responseText);
+          return null; // Return null on parsing failure
+      }
+
+      const response = JSON.parse(jsonMatch[0]);
+      
+      if (!response.recommendations || !Array.isArray(response.recommendations)) {
+          console.error('Invalid response format: "recommendations" array not found.');
+          return null; // Return null on invalid format
+      }
+
+      console.log('📝 Applying LLM recommendations...');
+
+      const eventsByName = new Map<string, EventDoc[]>();
+      for (const event of candidateEvents) {
+          // Store events by name, allowing for multiple events with the same name if needed
+          const list = eventsByName.get(event.name) ?? [];
+          list.push(event);
+          eventsByName.set(event.name, list);
+      }
+
+      const issues: string[] = [];
+      const validatedRecommendations: EventDoc[] = [];
+
+      for (const rawRec of response.recommendations) {
+          // validator 1
+          if (typeof rawRec !== 'object' || !rawRec) {
+              issues.push('Encountered a recommendation entry that is not an object.');
+              continue;
+          }
+
+          const { name, reason } = rawRec as { name?: unknown; reason?: unknown };
+
+          // validator 2
+          if (typeof name !== 'string' || !name.trim()) {
+              issues.push('Recommendation is missing a valid event name.');
+              continue;
+          }
+          
+          // validator 3: Check if event name exists in candidate events and use it once
+          const pool = eventsByName.get(name);
+          if (!pool || pool.length === 0) {
+              issues.push(`No available event named "${name}" to recommend.`);
+              continue;
+          }
+
+          const event = pool.shift() as EventDoc; // Use one instance and remove from pool
+
+          validatedRecommendations.push(event);
+          console.log(`✅ Recommended "${event.name}" (${reason ?? "no reason provided"})`);
+      }
+
+      if (issues.length > 0) {
+          console.warn(`LLM provided disallowed recommendations. Returning only valid ones. Issues:\n- ${issues.join('\n- ')}`);
+          // Even if there are issues, return the valid subset, not an error.
+      }
+
+      return validatedRecommendations
+        
+    } catch (error) {
+      console.error('❌ Error parsing LLM response:', (error as Error).message);
+      console.log('Response was:', responseText);
+      return null; // Return null on parsing or processing error
+    }
+  }
+
+  /** 
+   * Helper to serialize events for the prompt. 
+   */ 
+  private eventsToString(events: EventDoc[]): string { 
+      return events.map((e) => 
+          `- "${e.name}" | Date: ${e.date.toISOString()} | Location: ${e.location} | Duration: ${e.duration} min | Status: ${e.status} | Description: ${e.description}`
+      ).join("\n"); 
+  }
+
+  /**
+   * Display the recommended events in a readable format
+   */
+  displayRecommendations(events: EventDoc[]): void {
+    console.log('\n🎉 Recommended Events');
+    console.log('==================');
+    
+    if (events.length === 0) { 
+      console.log("No events recommended."); 
+      return; 
+    }
+    
+    events.forEach((event, index) => { 
+        const startTime = event.date.toLocaleString(); 
+        const durationHours = (event.duration / 60).toFixed(1); 
+        console.log(`${index + 1}. ${event.name} - ${event.location}\n   📅 ${startTime} (${durationHours}h)\n   📝 ${event.description}`); 
+    });
   }
 }
