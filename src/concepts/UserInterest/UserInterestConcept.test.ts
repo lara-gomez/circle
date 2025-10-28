@@ -5,8 +5,10 @@ import UserInterestConcept from "./UserInterestConcept.ts";
 
 const userA = "user:Alice" as ID;
 const userB = "user:Bob" as ID;
+const userC = "user:Charlie" as ID;
 const item1 = "item:Product123" as ID;
 const item2 = "item:ServiceABC" as ID;
+const item3 = "item:BookXYZ" as ID;
 
 Deno.test("Principle: User declares and manages personal and item interests", async () => {
   console.log("--- Starting Principle Test: User declares and manages interests ---");
@@ -237,5 +239,52 @@ Deno.test("Queries: _getPersonalInterests and _getItemInterests handle empty sta
   } finally {
     await client.close();
     console.log("--- Query Empty State Test Finished ---");
+  }
+});
+
+Deno.test("Query: _getUsersInterestedInItems functionality", async () => {
+  console.log("--- Starting _getUsersInterestedInItems Query Test ---");
+  const [db, client] = await testDb();
+  const userInterestConcept = new UserInterestConcept(db);
+
+  try {
+    console.log("Setup: Add various item interests for multiple users.");
+    await userInterestConcept.addItemInterest({ user: userA, item: item1 });
+    await userInterestConcept.addItemInterest({ user: userB, item: item1 });
+    await userInterestConcept.addItemInterest({ user: userA, item: item2 });
+    await userInterestConcept.addItemInterest({ user: userC, item: item2 });
+
+    console.log("Test: Retrieve users interested in item1 (should be userA, userB).");
+    const interestedInItem1 = await userInterestConcept._getUsersInterestedInItems({ item: item1 });
+    console.log(`- Users interested in ${item1}: ${JSON.stringify(interestedInItem1)}`);
+    assertEquals(interestedInItem1.length, 2, `Should return 2 users interested in ${item1}.`);
+    assertEquals(interestedInItem1.some(u => u.user === userA), true, `User A should be interested in ${item1}.`);
+    assertEquals(interestedInItem1.some(u => u.user === userB), true, `User B should be interested in ${item1}.`);
+    assertEquals(interestedInItem1.some(u => u.user === userC), false, `User C should NOT be interested in ${item1}.`);
+
+
+    console.log("Test: Retrieve users interested in item2 (should be userA, userC).");
+    const interestedInItem2 = await userInterestConcept._getUsersInterestedInItems({ item: item2 });
+    console.log(`- Users interested in ${item2}: ${JSON.stringify(interestedInItem2)}`);
+    assertEquals(interestedInItem2.length, 2, `Should return 2 users interested in ${item2}.`);
+    assertEquals(interestedInItem2.some(u => u.user === userA), true, `User A should be interested in ${item2}.`);
+    assertEquals(interestedInItem2.some(u => u.user === userC), true, `User C should be interested in ${item2}.`);
+    assertEquals(interestedInItem2.some(u => u.user === userB), false, `User B should NOT be interested in ${item2}.`);
+
+    console.log("Test: Retrieve users interested in item3 (no one interested).");
+    const interestedInItem3 = await userInterestConcept._getUsersInterestedInItems({ item: item3 });
+    console.log(`- Users interested in ${item3}: ${JSON.stringify(interestedInItem3)}`);
+    assertEquals(interestedInItem3.length, 0, `Should return 0 users interested in ${item3}.`);
+
+    console.log("Test: Verify that after removing an interest, query reflects change.");
+    await userInterestConcept.removeItemInterest({ user: userA, item: item1 });
+    const interestedInItem1AfterRemoval = await userInterestConcept._getUsersInterestedInItems({ item: item1 });
+    console.log(`- Users interested in ${item1} after userA's removal: ${JSON.stringify(interestedInItem1AfterRemoval)}`);
+    assertEquals(interestedInItem1AfterRemoval.length, 1, `Should return 1 user interested in ${item1} after removal.`);
+    assertEquals(interestedInItem1AfterRemoval.some(u => u.user === userB), true, `Only User B should still be interested in ${item1}.`);
+
+  } finally {
+    await client.close();
+    console.log("--- _getUsersInterestedInItems Query Test Finished ---");
   }
 });

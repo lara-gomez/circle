@@ -145,4 +145,18 @@ export default class UserInterestConcept {
   async _getItemInterests({ user }: { user: User }): Promise<UserItemInterestDoc[]> {
     return await this.userItemInterests.find({ user }).toArray();
   }
+
+  /**
+   * Query: Retrieves all users interested in a given item.
+   * @signature _getUsersInterestedInItems (item: Item): (user: User)
+   * @requires The item exists (implicitly, as the query will return an empty array if no interests are found for it).
+   * @effects Returns an array of dictionaries, each containing a 'user' field with the ID of a user interested in the item.
+   */
+  async _getUsersInterestedInItems({ item }: { item: Item }): Promise<Array<{ user: User }>> {
+    // Find all UserItemInterestDoc where the item matches
+    const interestedDocs = await this.userItemInterests.find({ item }).toArray();
+    // Extract the unique user IDs and map them to the required output format
+    const users = interestedDocs.map(doc => ({ user: doc.user }));
+    return users;
+  }
 }

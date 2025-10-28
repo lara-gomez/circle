@@ -130,4 +130,26 @@ Test: _getItemInterests for a user with no item interests.
 Queries: _getPersonalInterests and _getItemInterests handle empty states ... ok (589ms)
 
 
-ok | 6 passed | 0 failed (4s)
+Query: _getUsersInterestedInItems functionality ...
+------- output -------
+--- Starting _getUsersInterestedInItems Query Test ---
+
+Setup: Add various item interests for multiple users.
+
+Test: Retrieve users interested in item1 (should be userA, userB).
+- Users interested in item:Product123: [{"user":"user:Alice"},{"user":"user:Bob"}]
+
+Test: Retrieve users interested in item2 (should be userA, userC).
+- Users interested in item:ServiceABC: [{"user":"user:Alice"},{"user":"user:Charlie"}]
+
+Test: Retrieve users interested in item3 (no one interested).
+- Users interested in item:BookXYZ: []
+
+Test: Verify that after removing an interest, query reflects change.
+- Users interested in item:Product123 after userA's removal: [{"user":"user:Bob"}]
+
+--- _getUsersInterestedInItems Query Test Finished ---
+----- output end -----
+Query: _getUsersInterestedInItems functionality ... ok (788ms)
+
+ok | 7 passed | 0 failed (4s)

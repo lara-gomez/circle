@@ -43,3 +43,11 @@
     *   removeItemInterest (user: User, item: Item)
         *   requires: there exists a UserItemInterest associating the user to the given item
         *   effects: removes the UserItemInterest associating the user to the item
+        
+*   **queries**:
+    *   _getPersonalInterests (user: User): (personalInterest: UserPersonalInterestDoc)
+        *   effects: Returns a set of all personal interests (tags) associated with the given user.
+    *   _getItemInterests (user: User): (itemInterest: UserItemInterestDoc)
+        *   effects: Returns a set of all item interests associated with the given user.
+    *   _getUsersInterestedInItems (item: Item): (user: User)
+        *   effects: Returns a set of all users who have expressed interest in the given item.
