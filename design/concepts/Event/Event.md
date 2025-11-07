@@ -48,3 +48,15 @@
     *   **system** completeEvent (event: Event)
         *   **requires**: event.status = "upcoming" and (event.date + event.duration <= current_time)
         *   **effects**: event.status := "completed"
+
+*   **queries**:
+    *   _getEventsByOrganizer (organizer: User): (event: Event)
+        *   **requires**: the given event exists
+        *   **effects**: returns a list of all events organized by the given user
+    *   _getEventsByStatus (status: "upcoming" | "cancelled" | "completed"): (event: Event)
+        *   **requires**: status is one of the valid enum values
+        *   **effects**: returns a list of all events with the given status
+    *   _getAllEvents (): (event: Event)
+        *   **effects**: returns a list of all events
+    *   _getEventsByRecommendationContext (user: User, filters: String, priorities: String): (events: Event[])
+        *   **effects**: returns a list of events according to the given filters and priorities, sorted by relevance
