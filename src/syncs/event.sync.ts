@@ -701,10 +701,10 @@ export const RequestGetEventsByRecommendationContext: Sync = ({
       } as Record<symbol, unknown>;
 
       const userId = frame[currentUser] as ID | undefined;
-      const filterValue = frame[filters] as string | undefined;
-      const priorityValue = frame[priorities] as string | undefined;
+      const filtersValue = frame[filters] as string | undefined;
+      const prioritiesValue = frame[priorities] as string | undefined;
 
-      if (userId === undefined || filterValue === undefined || priorityValue === undefined) {
+      if (userId === undefined || !filtersValue || !prioritiesValue) {
         outputs.push({
           ...baseFrame,
           [results]: [],
@@ -713,21 +713,21 @@ export const RequestGetEventsByRecommendationContext: Sync = ({
         continue;
       }
 
-      const result = await Event._getEventsByRecommendationContext({
+      const recommendation = await Event._getEventsByRecommendationContext({
         user: userId,
-        filters: filterValue,
-        priorities: priorityValue,
+        filters: filtersValue,
+        priorities: prioritiesValue,
       });
 
-      if (Array.isArray(result)) {
-        await markCompletedInArray(result);
-        outputs.push({ ...baseFrame, [results]: result, [recommendationError]: null });
+      if (Array.isArray(recommendation)) {
+        await markCompletedInArray(recommendation);
+        outputs.push({ ...baseFrame, [results]: recommendation, [recommendationError]: null });
       } else {
-        outputs.push({ ...baseFrame, [results]: [], [recommendationError]: result.error });
+        outputs.push({ ...baseFrame, [results]: [], [recommendationError]: recommendation.error });
       }
     }
     if (outputs.length === 0) {
-      return emptyResultsFrame(base, results, [[recommendationError, null]]);
+      return emptyResultsFrame(base, results, [[recommendationError, "No recommendations."]]);
     }
 
     return outputs;
