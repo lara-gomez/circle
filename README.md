@@ -15,7 +15,24 @@ Circle helps users discover and organize events within their social network. Use
 - **`src/concepts/`** - TypeScript implementation of all concepts
 - **`src/concept_server.ts`** - Main server file for running the application
 
+## User Journey
+
+A link to a demonstration of the user journey is found [here](https://drive.google.com/file/d/1n8MWCR2p7Wama9PSc3nkUXv12WkODf4s/view?usp=sharing). On this repo, it can be found at [final-user-journey.mp4](final-user-journey.mp4).
+
+An associated trace can be found at [user-journey-trace.md](user-journey-trace.md).
+
+## Design and Reflection
+
+The final design doc is at [final-design-doc.md](final-design-doc.md).
+
+My reflection is located in the file [reflection.md](reflection.md).
+
+
 ## Quick Start
+
+### Deployed Application
+
+The application has been deployed and can be accessed at [https://circle-0hd0.onrender.com](https://circle-0hd0.onrender.com).
 
 ### Running the Application
 ```shell
