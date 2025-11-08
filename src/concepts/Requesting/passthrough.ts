@@ -31,10 +31,6 @@ export const inclusions: Record<string, string> = {
   "/api/LikertSurvey/_getRespondentAnswers": "answers are visible",
   "/api/LikertSurvey/submitResponse": "allow anyone to submit response",
   "/api/LikertSurvey/updateResponse": "allow anyone to update their response",
-  // "/api/Event/_getEventById": "allow anyone to get an event by id",
-  // "/api/Event/_getEventsByOrganizer": "allow anyone to get events by organizer",
-  // "/api/Event/_getEventsByStatus": "allow anyone to get events by status",
-  // "/api/Event/_getAllEvents": "allow anyone to get all events",
   "/api/Session/_getUser": "allow anyone to get a user by session id (public query)",
   "/api/UserAuthentication/_getUserByUsername":
     "allow anyone to get a user by username (public query)",

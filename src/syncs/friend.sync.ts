@@ -22,11 +22,11 @@ export const RequestSendFriendRequest: Sync = (
     { request },
   ]),
   where: async (frames) => {
-    frames = await frames.query(Session._getUser, { session }, { currentUser });
+    frames = await frames.query(Session._getUser, { session }, { user: currentUser });
     frames = frames.filter(($) => $[currentUser] !== undefined);
 
     frames = await frames.query(
-      UserAuthentication._getUserByUsername, { targetUsername }, { targetUser },
+      UserAuthentication._getUserByUsername, { username: targetUsername }, { user: targetUser },
     );
     frames = frames.filter(($) => $[targetUser] !== undefined);
 
