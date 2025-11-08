@@ -1,176 +1,300 @@
-import { assertEquals, assertExists, assertNotEquals } from "jsr:@std/assert";
+import { assertEquals, assertNotEquals, assertExists } from "jsr:@std/assert";
 import { testDb } from "@utils/database.ts";
 import { ID } from "@utils/types.ts";
 import UserAuthenticationConcept from "./UserAuthenticationConcept.ts";
 
-const usernameAlice = "alice_jones";
-const passwordAlice = "securePass123";
-const usernameBob = "bob_smith";
-const passwordBob = "anotherSecurePass";
-const nonExistentUsername = "unknown_user";
-const wrongPassword = "wrongPassword";
+const aliceUsername = "alice";
+const alicePassword = "password123";
+const bobUsername = "bob";
+const bobPassword = "securepassword";
 
-Deno.test("Principle: Register and then authenticate a user successfully", async () => {
+Deno.test("Principle: User can register and then authenticate", async () => {
+  console.log("--- Test Principle: Register and Authenticate ---");
   const [db, client] = await testDb();
   const authConcept = new UserAuthenticationConcept(db);
 
   try {
-    console.log("Trace: Registering a new user (Alice)...");
-    const registerResult = await authConcept.register({ username: usernameAlice, password: passwordAlice });
-    assertNotEquals("error" in registerResult, true, `Registering Alice failed: ${JSON.stringify(registerResult)}`);
+    console.log(`Action: Registering user '${aliceUsername}'`);
+    const registerResult = await authConcept.register({
+      username: aliceUsername,
+      password: alicePassword,
+    });
+    assertNotEquals("error" in registerResult, true, "Registration should succeed.");
     const { user: aliceId } = registerResult as { user: ID };
-    assertExists(aliceId, "A user ID should be returned after successful registration.");
-    console.log(`Trace: User Alice registered with ID: ${aliceId}`);
+    assertExists(aliceId, "Registered user ID should be returned.");
+    console.log(`Effect: User '${aliceUsername}' registered with ID: ${aliceId}`);
 
-    console.log("Trace: Attempting to authenticate Alice with correct credentials...");
-    const authResult = await authConcept.authenticate({ username: usernameAlice, password: passwordAlice });
-    assertNotEquals("error" in authResult, true, `Authentication for Alice failed: ${JSON.stringify(authResult)}`);
-    const { user: authenticatedAliceId } = authResult as { user: ID };
-    assertEquals(authenticatedAliceId, aliceId, "Authenticated user ID should match registered user ID.");
-    console.log(`Trace: User Alice successfully authenticated.`);
+    console.log(`Query: Verifying username for ID '${aliceId}'`);
+    const fetchedUsername = await authConcept._getUsername({ user: aliceId });
+    assertEquals(fetchedUsername.length, 1, "Should find one username for the user ID.");
+    assertEquals(fetchedUsername[0].username, aliceUsername, "Fetched username should match.");
+    console.log(`Verification: Username '${fetchedUsername[0].username}' found for user ID.`);
 
-    console.log("Principle fulfilled: A user was registered and then successfully authenticated.");
+    console.log(
+      `Action: Authenticating user '${aliceUsername}' with correct password.`,
+    );
+    const authenticateResult = await authConcept.authenticate({
+      username: aliceUsername,
+      password: alicePassword,
+    });
+    assertNotEquals("error" in authenticateResult, true, "Authentication should succeed.");
+    const { user: authenticatedAliceId } = authenticateResult as { user: ID };
+    assertEquals(
+      authenticatedAliceId,
+      aliceId,
+      "Authenticated user ID should match registered ID.",
+    );
+    console.log(`Effect: User '${aliceUsername}' successfully authenticated.`);
+
+    console.log("Principle fulfilled: User registered and successfully authenticated.");
   } finally {
     await client.close();
   }
 });
 
-Deno.test("Action: register - Successful registration", async () => {
+Deno.test("Action: register - success with unique username", async () => {
+  console.log("--- Test Action: register - success ---");
   const [db, client] = await testDb();
   const authConcept = new UserAuthenticationConcept(db);
 
   try {
-    console.log("Testing: Successful registration of a new user.");
-    const registerResult = await authConcept.register({ username: usernameBob, password: passwordBob });
-    assertNotEquals("error" in registerResult, true, `Registration failed unexpectedly: ${JSON.stringify(registerResult)}`);
-    const { user: bobId } = registerResult as { user: ID };
+    console.log(`Action: Registering user '${bobUsername}'`);
+    const result = await authConcept.register({
+      username: bobUsername,
+      password: bobPassword,
+    });
+    assertNotEquals("error" in result, true, "Registration should succeed.");
+    const { user: bobId } = result as { user: ID };
     assertExists(bobId, "User ID should be returned on successful registration.");
-    console.log(`Effect confirmed: User Bob registered with ID: ${bobId}`);
+    console.log(`Effect: User '${bobUsername}' registered with ID: ${bobId}`);
 
-    const userQuery = await authConcept._getUserByUsername({ username: usernameBob });
-    assertNotEquals("error" in userQuery, true, `Query for Bob failed: ${JSON.stringify(userQuery)}`);
-    assertEquals((userQuery as { user: ID }[])[0].user, bobId, "Registered user should be retrievable by username.");
+    console.log(`Query: Confirming user '${bobUsername}' exists via username query.`);
+    const fetchedUser = await authConcept._getUserByUsername({ username: bobUsername });
+    assertEquals(fetchedUser.length, 1, "Should find the registered user.");
+    assertEquals(fetchedUser[0].user, bobId, "Fetched user ID should match.");
+    console.log("Verification: User successfully registered and found in system.");
   } finally {
     await client.close();
   }
 });
 
-Deno.test("Action: register - Requires: username must not already exist", async () => {
+Deno.test("Action: register - failure with duplicate username", async () => {
+  console.log("--- Test Action: register - duplicate username failure ---");
   const [db, client] = await testDb();
   const authConcept = new UserAuthenticationConcept(db);
 
   try {
-    console.log("Testing: Registering a username that already exists.");
-    await authConcept.register({ username: usernameAlice, password: passwordAlice }); // First registration (expected to succeed)
-    console.log(`Setup: User '${usernameAlice}' registered once.`);
+    // First registration (should succeed)
+    console.log(`Action: First registration attempt for '${aliceUsername}'`);
+    const firstRegisterResult = await authConcept.register({
+      username: aliceUsername,
+      password: alicePassword,
+    });
+    assertNotEquals("error" in firstRegisterResult, true, "First registration should succeed.");
+    const { user: aliceId } = firstRegisterResult as { user: ID };
+    console.log(`Effect: User '${aliceUsername}' registered with ID: ${aliceId}`);
 
-    const duplicateRegisterResult = await authConcept.register({ username: usernameAlice, password: passwordAlice }); // Second registration (expected to fail)
-    assertEquals("error" in duplicateRegisterResult, true, "Registering a duplicate username should return an error.");
-    assertEquals((duplicateRegisterResult as { error: string }).error, `Username '${usernameAlice}' already exists`, "Error message should indicate duplicate username.");
-    console.log(`Requirement confirmed: Cannot register with an existing username. Error: ${JSON.stringify(duplicateRegisterResult)}`);
+    // Second registration with the same username (should fail)
+    console.log(`Action: Second registration attempt for duplicate username '${aliceUsername}'`);
+    const secondRegisterResult = await authConcept.register({
+      username: aliceUsername,
+      password: "anotherpassword",
+    });
+    assertEquals(
+      "error" in secondRegisterResult,
+      true,
+      "Registration with duplicate username should return an error.",
+    );
+    assertEquals(
+      (secondRegisterResult as { error: string }).error,
+      `Username '${aliceUsername}' already exists`,
+      "Error message should indicate duplicate username.",
+    );
+    console.log(
+      `Requirement violation: Registering duplicate username returned expected error: '${
+        (secondRegisterResult as { error: string }).error
+      }'`,
+    );
+
+    console.log(`Query: Verifying only one user '${aliceUsername}' exists.`);
+    const users = await db.collection("UserAuthentication.users").find({ username: aliceUsername }).toArray();
+    assertEquals(users.length, 1, "Only one user document should exist for the username.");
+    console.log("Verification: Only one user record exists as expected.");
   } finally {
     await client.close();
   }
 });
 
-Deno.test("Action: authenticate - Successful authentication", async () => {
+Deno.test("Action: authenticate - success with correct credentials", async () => {
+  console.log("--- Test Action: authenticate - success ---");
   const [db, client] = await testDb();
   const authConcept = new UserAuthenticationConcept(db);
 
   try {
-    console.log("Testing: Successful authentication with correct credentials.");
-    const registerResult = await authConcept.register({ username: usernameAlice, password: passwordAlice });
-    const { user: aliceId } = registerResult as { user: ID };
-    console.log(`Setup: User Alice registered with ID: ${aliceId}`);
+    // Setup: Register a user first
+    const { user: aliceId } = (await authConcept.register({
+      username: aliceUsername,
+      password: alicePassword,
+    })) as { user: ID };
+    console.log(`Setup: User '${aliceUsername}' registered with ID: ${aliceId}`);
 
-    const authResult = await authConcept.authenticate({ username: usernameAlice, password: passwordAlice });
-    assertNotEquals("error" in authResult, true, `Authentication failed unexpectedly: ${JSON.stringify(authResult)}`);
-    const { user: authenticatedAliceId } = authResult as { user: ID };
-    assertEquals(authenticatedAliceId, aliceId, "Authenticated user ID should match registered user ID.");
-    console.log(`Effect confirmed: User Alice authenticated successfully.`);
+    console.log(
+      `Action: Authenticating user '${aliceUsername}' with correct password.`,
+    );
+    const authenticateResult = await authConcept.authenticate({
+      username: aliceUsername,
+      password: alicePassword,
+    });
+    assertNotEquals("error" in authenticateResult, true, "Authentication should succeed.");
+    const { user: authenticatedId } = authenticateResult as { user: ID };
+    assertEquals(authenticatedId, aliceId, "Authenticated user ID should match.");
+    console.log(`Effect: User '${authenticatedId}' successfully authenticated.`);
   } finally {
     await client.close();
   }
 });
 
-Deno.test("Action: authenticate - Requires: user with given username and password must exist", async () => {
+Deno.test("Action: authenticate - failure with incorrect password", async () => {
+  console.log("--- Test Action: authenticate - incorrect password failure ---");
   const [db, client] = await testDb();
   const authConcept = new UserAuthenticationConcept(db);
 
   try {
-    await authConcept.register({ username: usernameAlice, password: passwordAlice });
-    console.log(`Setup: User Alice registered.`);
+    // Setup: Register a user first
+    await authConcept.register({ username: aliceUsername, password: alicePassword });
+    console.log(`Setup: User '${aliceUsername}' registered.`);
 
-    console.log("Testing: Authentication with non-existent username.");
-    const authNonExistentUser = await authConcept.authenticate({ username: nonExistentUsername, password: passwordAlice });
-    assertEquals("error" in authNonExistentUser, true, "Authentication with non-existent username should fail.");
-    assertEquals((authNonExistentUser as { error: string }).error, "Invalid username or password", "Error message for non-existent user should be correct.");
-    console.log(`Requirement confirmed: Failed authentication for non-existent user. Error: ${JSON.stringify(authNonExistentUser)}`);
-
-    console.log("Testing: Authentication with incorrect password.");
-    const authWrongPassword = await authConcept.authenticate({ username: usernameAlice, password: wrongPassword });
-    assertEquals("error" in authWrongPassword, true, "Authentication with incorrect password should fail.");
-    assertEquals((authWrongPassword as { error: string }).error, "Invalid username or password", "Error message for wrong password should be correct.");
-    console.log(`Requirement confirmed: Failed authentication for incorrect password. Error: ${JSON.stringify(authWrongPassword)}`);
+    console.log(
+      `Action: Authenticating user '${aliceUsername}' with incorrect password.`,
+    );
+    const authenticateResult = await authConcept.authenticate({
+      username: aliceUsername,
+      password: "wrongpassword",
+    });
+    assertEquals(
+      "error" in authenticateResult,
+      true,
+      "Authentication with incorrect password should return an error.",
+    );
+    assertEquals(
+      (authenticateResult as { error: string }).error,
+      "Invalid username or password",
+      "Error message should indicate invalid credentials.",
+    );
+    console.log(
+      `Requirement violation: Authenticating with wrong password returned expected error: '${
+        (authenticateResult as { error: string }).error
+      }'`,
+    );
   } finally {
     await client.close();
   }
 });
 
-Deno.test("Query: _getUsername - Retrieve username by User ID", async () => {
+Deno.test("Action: authenticate - failure with non-existent username", async () => {
+  console.log("--- Test Action: authenticate - non-existent username failure ---");
   const [db, client] = await testDb();
   const authConcept = new UserAuthenticationConcept(db);
 
   try {
-    const registerResult = await authConcept.register({ username: usernameAlice, password: passwordAlice });
-    const { user: aliceId } = registerResult as { user: ID };
-    console.log(`Setup: User Alice registered with ID: ${aliceId}`);
-
-    console.log("Testing: Retrieving username for existing user ID.");
-    const usernameResult = await authConcept._getUsername({ user: aliceId });
-    assertNotEquals("error" in usernameResult, true, `_getUsername failed unexpectedly: ${JSON.stringify(usernameResult)}`);
-
-    const usernames = usernameResult as { username: string }[];
-
-    assertEquals(usernames.length, 1, "Should return an array with one username.");
-    assertEquals(usernames[0].username, usernameAlice, "Returned username should match registered username.");
-    console.log(`Effect confirmed: Username '${usernameAlice}' retrieved for user ID '${aliceId}'.`);
-
-    console.log("Testing: Retrieving username for non-existent user ID.");
-    const nonExistentId = "user:fake" as ID;
-    const errorResult = await authConcept._getUsername({ user: nonExistentId });
-    assertEquals("error" in errorResult, true, "_getUsername for non-existent user should return an error.");
-    assertEquals((errorResult as { error: string }).error, `User with ID '${nonExistentId}' not found`, "Error message should indicate user not found.");
-    console.log(`Requirement confirmed: Failed to retrieve username for non-existent user. Error: ${JSON.stringify(errorResult)}`);
+    console.log(`Action: Attempting to authenticate non-existent user '${bobUsername}'.`);
+    const authenticateResult = await authConcept.authenticate({
+      username: bobUsername,
+      password: bobPassword,
+    });
+    assertEquals(
+      "error" in authenticateResult,
+      true,
+      "Authentication with non-existent username should return an error.",
+    );
+    assertEquals(
+      (authenticateResult as { error: string }).error,
+      "Invalid username or password",
+      "Error message should indicate invalid credentials.",
+    );
+    console.log(
+      `Requirement violation: Authenticating non-existent user returned expected error: '${
+        (authenticateResult as { error: string }).error
+      }'`,
+    );
   } finally {
     await client.close();
   }
 });
 
-Deno.test("Query: _getUserByUsername - Retrieve User ID by username", async () => {
+Deno.test("Query: _getUsername - success for existing user", async () => {
+  console.log("--- Test Query: _getUsername - success ---");
   const [db, client] = await testDb();
   const authConcept = new UserAuthenticationConcept(db);
 
   try {
-    const registerResult = await authConcept.register({ username: usernameBob, password: passwordBob });
-    const { user: bobId } = registerResult as { user: ID };
-    console.log(`Setup: User Bob registered with ID: ${bobId}`);
+    // Setup: Register a user
+    const { user: aliceId } = (await authConcept.register({
+      username: aliceUsername,
+      password: alicePassword,
+    })) as { user: ID };
+    console.log(`Setup: User '${aliceUsername}' registered with ID: ${aliceId}`);
 
-    console.log("Testing: Retrieving user ID for existing username.");
-    const userResult = await authConcept._getUserByUsername({ username: usernameBob });
-    assertNotEquals("error" in userResult, true, `_getUserByUsername failed unexpectedly: ${JSON.stringify(userResult)}`);
+    console.log(`Query: Getting username for user ID '${aliceId}'.`);
+    const result = await authConcept._getUsername({ user: aliceId });
+    assertEquals(result.length, 1, "Should return an array with one result.");
+    assertEquals(result[0].username, aliceUsername, "Returned username should match.");
+    console.log(`Effect: Successfully retrieved username '${result[0].username}'.`);
+  } finally {
+    await client.close();
+  }
+});
 
-    const users = userResult as { user: ID }[];
+Deno.test("Query: _getUsername - failure for non-existent user", async () => {
+  console.log("--- Test Query: _getUsername - non-existent user failure ---");
+  const [db, client] = await testDb();
+  const authConcept = new UserAuthenticationConcept(db);
+  const nonExistentUserId = "user:fake" as ID;
 
-    assertEquals(users.length, 1, "Should return an array with one user ID.");
-    assertEquals(users[0].user, bobId, "Returned user ID should match registered user ID.");
-    console.log(`Effect confirmed: User ID '${bobId}' retrieved for username '${usernameBob}'.`);
+  try {
+    console.log(`Query: Getting username for non-existent user ID '${nonExistentUserId}'.`);
+    const result = await authConcept._getUsername({ user: nonExistentUserId });
+    assertEquals(result.length, 0, "Should return an empty array for a non-existent user.");
+    console.log("Requirement violation: Query for non-existent user returned empty array as expected.");
+  } finally {
+    await client.close();
+  }
+});
 
-    console.log("Testing: Retrieving user ID for non-existent username.");
-    const errorResult = await authConcept._getUserByUsername({ username: nonExistentUsername });
-    assertEquals("error" in errorResult, true, "_getUserByUsername for non-existent username should return an error.");
-    assertEquals((errorResult as { error: string }).error, `User with username '${nonExistentUsername}' not found`, "Error message should indicate username not found.");
-    console.log(`Requirement confirmed: Failed to retrieve user ID for non-existent username. Error: ${JSON.stringify(errorResult)}`);
+Deno.test("Query: _getUserByUsername - success for existing username", async () => {
+  console.log("--- Test Query: _getUserByUsername - success ---");
+  const [db, client] = await testDb();
+  const authConcept = new UserAuthenticationConcept(db);
+
+  try {
+    // Setup: Register a user
+    const { user: aliceId } = (await authConcept.register({
+      username: aliceUsername,
+      password: alicePassword,
+    })) as { user: ID };
+    console.log(`Setup: User '${aliceUsername}' registered with ID: ${aliceId}`);
+
+    console.log(`Query: Getting user ID for username '${aliceUsername}'.`);
+    const result = await authConcept._getUserByUsername({ username: aliceUsername });
+    assertEquals(result.length, 1, "Should return an array with one result.");
+    assertEquals(result[0].user, aliceId, "Returned user ID should match.");
+    console.log(`Effect: Successfully retrieved user ID '${result[0].user}'.`);
+  } finally {
+    await client.close();
+  }
+});
+
+Deno.test("Query: _getUserByUsername - failure for non-existent username", async () => {
+  console.log("--- Test Query: _getUserByUsername - non-existent username failure ---");
+  const [db, client] = await testDb();
+  const authConcept = new UserAuthenticationConcept(db);
+  const nonExistentUsername = "unknownuser";
+
+  try {
+    console.log(`Query: Getting user ID for non-existent username '${nonExistentUsername}'.`);
+    const result = await authConcept._getUserByUsername({ username: nonExistentUsername });
+    assertEquals(result.length, 0, "Should return an empty array for a non-existent username.");
+    console.log("Requirement violation: Query for non-existent username returned empty array as expected.");
   } finally {
     await client.close();
   }

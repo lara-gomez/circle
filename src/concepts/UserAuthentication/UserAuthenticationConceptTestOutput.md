@@ -1,75 +1,120 @@
 ```
-running 7 tests from ./src/concepts/UserAuthentication/UserAuthenticationConcept.test.ts
+running 10 tests from ./src/concepts/UserAuthentication/UserAuthenticationConcept.test.ts
 
-Principle: Register and then authenticate a user successfully ...
+Principle: User can register and then authenticate ...
 ------- output -------
-Trace: Registering a new user (Alice)...
-Trace: User Alice registered with ID: 0199ea5f-d97a-70c8-8216-a5dd62a20137
-Trace: Attempting to authenticate Alice with correct credentials...
-Trace: User Alice successfully authenticated.
-Principle fulfilled: A user was registered and then successfully authenticated.
+--- Test Principle: Register and Authenticate ---
+Action: Registering user 'alice'
+Effect: User 'alice' registered with ID: 019a6058-ed64-7b59-81ea-c3cb13d0ff54
+Query: Verifying username for ID '019a6058-ed64-7b59-81ea-c3cb13d0ff54'
+Verification: Username 'alice' found for user ID.
+Action: Authenticating user 'alice' with correct password.
+Effect: User 'alice' successfully authenticated.
+Principle fulfilled: User registered and successfully authenticated.
 ----- output end -----
-Principle: Register and then authenticate a user successfully ... ok (631ms)
+
+Principle: User can register and then authenticate ... ok (677ms)
 
 
-Action: register - Successful registration ...
+Action: register - success with unique username ...
 ------- output -------
-Testing: Successful registration of a new user.
-Effect confirmed: User Bob registered with ID: 0199ea5f-dc05-789d-88ff-4543b0d17738
+--- Test Action: register - success ---
+Action: Registering user 'bob'
+Effect: User 'bob' registered with ID: 019a6058-efcd-72b2-afdd-28c94d5b8c44
+Query: Confirming user 'bob' exists via username query.
+Verification: User successfully registered and found in system.
 ----- output end -----
-Action: register - Successful registration ... ok (631ms)
+
+Action: register - success with unique username ... ok (593ms)
 
 
-Action: register - Requires: username must not already exist ...
+Action: register - failure with duplicate username ...
 ------- output -------
-Testing: Registering a username that already exists.
-Setup: User 'alice_jones' registered once.
-Requirement confirmed: Cannot register with an existing username. Error: {"error":"Username 'alice_jones' already exists"}
+--- Test Action: register - duplicate username failure ---
+Action: First registration attempt for 'alice'
+Effect: User 'alice' registered with ID: 019a6058-f22c-71e3-9376-56760093ca74
+Action: Second registration attempt for duplicate username 'alice'
+Requirement violation: Registering duplicate username returned expected error: 'Username 'alice' already exists'
+Query: Verifying only one user 'alice' exists.
+Verification: Only one user record exists as expected.
 ----- output end -----
-Action: register - Requires: username must not already exist ... ok (632ms)
+
+Action: register - failure with duplicate username ... ok (630ms)
 
 
-Action: authenticate - Successful authentication ...
+Action: authenticate - success with correct credentials ...
 ------- output -------
-Testing: Successful authentication with correct credentials.
-Setup: User Alice registered with ID: 0199ea5f-e0f6-7d48-a82d-5ca5fd0fc6b3
-Effect confirmed: User Alice authenticated successfully.
+--- Test Action: authenticate - success ---
+Setup: User 'alice' registered with ID: 019a6058-f494-7613-9d54-df3201264249
+Action: Authenticating user 'alice' with correct password.
+Effect: User '019a6058-f494-7613-9d54-df3201264249' successfully authenticated.
 ----- output end -----
-Action: authenticate - Successful authentication ... ok (630ms)
+
+Action: authenticate - success with correct credentials ... ok (585ms)
 
 
-Action: authenticate - Requires: user with given username and password must exist ...
+Action: authenticate - failure with incorrect password ...
 ------- output -------
-Setup: User Alice registered.
-Testing: Authentication with non-existent username.
-Requirement confirmed: Failed authentication for non-existent user. Error: {"error":"Invalid username or password"}
-Testing: Authentication with incorrect password.
-Requirement confirmed: Failed authentication for incorrect password. Error: {"error":"Invalid username or password"}
+--- Test Action: authenticate - incorrect password failure ---
+Setup: User 'alice' registered.
+Action: Authenticating user 'alice' with incorrect password.
+Requirement violation: Authenticating with wrong password returned expected error: 'Invalid username or password'
 ----- output end -----
-Action: authenticate - Requires: user with given username and password must exist ... ok (599ms)
+
+Action: authenticate - failure with incorrect password ... ok (569ms)
 
 
-Query: _getUsername - Retrieve username by User ID ...
+Action: authenticate - failure with non-existent username ...
 ------- output -------
-Setup: User Alice registered with ID: 0199ea5f-e57a-71de-9b4c-3c7065d402a1
-Testing: Retrieving username for existing user ID.
-Effect confirmed: Username 'alice_jones' retrieved for user ID '0199ea5f-e57a-71de-9b4c-3c7065d402a1'.
-Testing: Retrieving username for non-existent user ID.
-Requirement confirmed: Failed to retrieve username for non-existent user. Error: {"error":"User with ID 'user:fake' not found"}
+--- Test Action: authenticate - non-existent username failure ---
+Action: Attempting to authenticate non-existent user 'bob'.
+Requirement violation: Authenticating non-existent user returned expected error: 'Invalid username or password'
 ----- output end -----
-Query: _getUsername - Retrieve username by User ID ... ok (570ms)
+
+Action: authenticate - failure with non-existent username ... ok (503ms)
 
 
-Query: _getUserByUsername - Retrieve User ID by username ...
+Query: _getUsername - success for existing user ...
 ------- output -------
-Setup: User Bob registered with ID: 0199ea5f-e7f6-7d51-adf1-ff7912c6263e
-Testing: Retrieving user ID for existing username.
-Effect confirmed: User ID '0199ea5f-e7f6-7d51-adf1-ff7912c6263e' retrieved for username 'bob_smith'.
-Testing: Retrieving user ID for non-existent username.
-Requirement confirmed: Failed to retrieve user ID for non-existent username. Error: {"error":"User with username 'unknown_user' not found"}
+--- Test Query: _getUsername - success ---
+Setup: User 'alice' registered with ID: 019a6058-fb0c-71ac-8840-eaa8cb13d48a
+Query: Getting username for user ID '019a6058-fb0c-71ac-8840-eaa8cb13d48a'.
+Effect: Successfully retrieved username 'alice'.
 ----- output end -----
-Query: _getUserByUsername - Retrieve User ID by username ... ok (633ms)
+
+Query: _getUsername - success for existing user ... ok (586ms)
 
 
-ok | 7 passed | 0 failed (4s)
+Query: _getUsername - failure for non-existent user ...
+------- output -------
+--- Test Query: _getUsername - non-existent user failure ---
+Query: Getting username for non-existent user ID 'user:fake'.
+Requirement violation: Query for non-existent user returned empty array as expected.
+----- output end -----
+
+Query: _getUsername - failure for non-existent user ... ok (528ms)
+
+
+Query: _getUserByUsername - success for existing username ...
+------- output -------
+--- Test Query: _getUserByUsername - success ---
+Setup: User 'alice' registered with ID: 019a6058-ff67-7f55-b676-6f8265d9cee3
+Query: Getting user ID for username 'alice'.
+Effect: Successfully retrieved user ID '019a6058-ff67-7f55-b676-6f8265d9cee3'.
+----- output end -----
+
+Query: _getUserByUsername - success for existing username ... ok (577ms)
+
+
+Query: _getUserByUsername - failure for non-existent username ...
+------- output -------
+--- Test Query: _getUserByUsername - non-existent username failure ---
+Query: Getting user ID for non-existent username 'unknownuser'.
+Requirement violation: Query for non-existent username returned empty array as expected.
+----- output end -----
+
+Query: _getUserByUsername - failure for non-existent username ... ok (568ms)
+
+
+ok | 10 passed | 0 failed (5s)
 ```

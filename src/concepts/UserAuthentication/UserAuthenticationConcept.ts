@@ -86,10 +86,10 @@ export default class UserAuthenticationConcept {
    */
   async _getUsername(
     { user }: { user: User },
-  ): Promise<{ username: string }[] | { error: string }> {
+  ): Promise<Array<{ username: string }>> {
     const foundUser = await this.users.findOne({ _id: user });
     if (!foundUser) {
-      return { error: `User with ID '${user}' not found` };
+      return [];
     }
     return [{ username: foundUser.username }];
   }
@@ -102,10 +102,10 @@ export default class UserAuthenticationConcept {
    */
   async _getUserByUsername(
     { username }: { username: string },
-  ): Promise<{ user: User }[] | { error: string }> {
+  ): Promise<Array<{ user: User }>> {
     const foundUser = await this.users.findOne({ username });
     if (!foundUser) {
-      return { error: `User with username '${username}' not found` };
+      return [];
     }
     return [{ user: foundUser._id }];
   }

@@ -71,7 +71,7 @@ type User = ID;
 interface UserDocument {
   _id: User;
   username: string;
-  password: string; // WARNING: In a production system, passwords should always be hashed and never stored in plain text.
+  password: string;
 }
 
 export default class UserAuthenticationConcept {
@@ -82,7 +82,7 @@ export default class UserAuthenticationConcept {
   }
 
   /**
-   * register (username: String, password: String): (user: User) | (error: String)
+   * register (username: String, password: String): (user: User)
    *
    * @requires the username must not already exist in the system
    * @effects creates a new User with this username and password, returns the user
@@ -90,27 +90,25 @@ export default class UserAuthenticationConcept {
   async register(
     { username, password }: { username: string; password: string },
   ): Promise<{ user: User } | { error: string }> {
-    // Check if the username already exists (Precondition)
+    // Check if the username already exists
     const existingUser = await this.users.findOne({ username });
     if (existingUser) {
       return { error: `Username '${username}' already exists` };
     }
 
-    // Generate a fresh ID for the new user
     const newUser: UserDocument = {
-      _id: freshID() as User,
+      _id: freshID() as User, // Generate a fresh ID for the new user
       username,
-      password, // For this exercise, storing as plain text. In production, hash!
+      password,
     };
 
-    // Insert the new user into the database (Effects)
     await this.users.insertOne(newUser);
 
     return { user: newUser._id };
   }
 
   /**
-   * authenticate (username: String, password: String): (user: User) | (error: String)
+   * authenticate (username: String, password: String): (user: User)
    *
    * @requires there exists a user with the given username and password
    * @effects returns the registered user that matches with the given username and password
@@ -118,48 +116,44 @@ export default class UserAuthenticationConcept {
   async authenticate(
     { username, password }: { username: string; password: string },
   ): Promise<{ user: User } | { error: string }> {
-    // Find a user with the given username and password (Precondition)
-    // WARNING: In production, you would retrieve by username, then securely compare hashed passwords.
+    // Find a user with the given username and password
     const authenticatedUser = await this.users.findOne({ username, password });
     if (!authenticatedUser) {
       return { error: "Invalid username or password" };
     }
 
-    // Return the authenticated user's ID (Effects)
     return { user: authenticatedUser._id };
   }
 
   /**
-   * _getUsername (user: User) : (username: String)[] | (error: String)
+   * _getUsername (user: User) : (username: String)
    *
    * @requires user exists
    * @effects returns the username associated with the user
    */
   async _getUsername(
     { user }: { user: User },
-  ): Promise<{ username: string }[] | { error: string }> {
+  ): Promise<Array<{ username: string }>> {
     const foundUser = await this.users.findOne({ _id: user });
     if (!foundUser) {
-      return { error: `User with ID '${user}' not found` };
+      return [];
     }
-    // Queries return an array of dictionaries
     return [{ username: foundUser.username }];
   }
 
   /**
-   * _getUserByUsername (username: String) : (user: User)[] | (error: String)
+   * _getUserByUsername (username: String) : (user: User) | (error: String)
    *
    * @requires a user with the given username exists
    * @effects if a user with the given username exists, returns that user; otherwise returns an error
    */
   async _getUserByUsername(
     { username }: { username: string },
-  ): Promise<{ user: User }[] | { error: string }> {
+  ): Promise<Array<{ user: User }>> {
     const foundUser = await this.users.findOne({ username });
     if (!foundUser) {
-      return { error: `User with username '${username}' not found` };
+      return [];
     }
-    // Queries return an array of dictionaries
     return [{ user: foundUser._id }];
   }
 }

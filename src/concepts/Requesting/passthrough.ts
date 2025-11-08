@@ -31,7 +31,25 @@ export const inclusions: Record<string, string> = {
   "/api/LikertSurvey/_getRespondentAnswers": "answers are visible",
   "/api/LikertSurvey/submitResponse": "allow anyone to submit response",
   "/api/LikertSurvey/updateResponse": "allow anyone to update their response",
-  
+  // "/api/Event/_getEventById": "allow anyone to get an event by id",
+  // "/api/Event/_getEventsByOrganizer": "allow anyone to get events by organizer",
+  // "/api/Event/_getEventsByStatus": "allow anyone to get events by status",
+  // "/api/Event/_getAllEvents": "allow anyone to get all events",
+  "/api/Session/_getUser": "allow anyone to get a user by session id (public query)",
+  "/api/UserAuthentication/_getUserByUsername":
+    "allow anyone to get a user by username (public query)",
+  "/api/UserAuthentication/_getUsername":
+    "allow anyone to get a username by user id (public query)",
+  "/api/Friending/_getFriends": "allow anyone to get friends (public query)",
+  "/api/Friending/_getIncomingRequests":
+    "allow anyone to get incoming requests (public query)",
+  "/api/Friending/_getOutgoingRequests":
+    "allow anyone to get outgoing requests(public query)",
+  "/api/Reviewing/_getReview": "allow anyone to access a specific review (public query)",
+  "/api/Reviewing/_getReviewsByItem":
+    "allow anyone to access all reviews for an event (public query)",
+  "/api/Reviewing/_getReviewsByUser":
+    "allow anyone to access reviews by a given user (public query)",
 };
 
 /**
@@ -48,4 +66,38 @@ export const exclusions: Array<string> = [
   // Feel free to delete these example exclusions
   "/api/LikertSurvey/createSurvey",
   "/api/LikertSurvey/addQuestion",
+  "/api/Event/createEvent",
+  "/api/Event/modifyEvent",
+  "/api/Event/cancelEvent",
+  "/api/Event/unCancelEvent",
+  "/api/Event/deleteEvent",
+  "/api/Event/completeEvent",
+  "/api/Event/_getEventById",
+  "/api/Event/_getEventsByOrganizer",
+  "/api/Event/_getEventsByStatus",
+  "/api/Event/_getAllEvents",
+  "/api/Event/_getEventsByRecommendationContext",
+  "/api/Event/createRecommendationPrompt",
+  "/api/Event/parseAndApplyRecommendations",
+  "/api/Event/eventsToString",
+  "/api/Event/displayRecommendations",
+  "/api/Session/create",
+  "/api/Session/delete",
+  "/api/UserAuthentication/register",
+  "/api/UserAuthentication/authenticate",
+  "/api/Friending/ensureUserExists",
+  "/api/Friending/sendFriendRequest",
+  "/api/Friending/acceptFriendRequest",
+  "/api/Friending/removeFriendRequest",
+  "/api/Friending/removeFriend",
+  "/api/Reviewing/addReview",
+  "/api/Reviewing/removeReview",
+  "/api/Reviewing/modifyReview",
+  "/api/UserInterest/addPersonalInterest",
+  "/api/UserInterest/removePersonalInterest",
+  "/api/UserInterest/addItemInterest",
+  "/api/UserInterest/removeItemInterest",
+  "/api/UserInterest/_getPersonalInterests",
+  "/api/UserInterest/_getItemInterests",
+  "/api/UserInterest/_getUsersInterestedInItems"
 ];

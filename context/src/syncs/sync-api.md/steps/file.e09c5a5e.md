@@ -1,0 +1,209 @@
+---
+timestamp: 'Fri Nov 07 2025 17:41:30 GMT-0500 (Eastern Standard Time)'
+parent: '[[../20251107_174130.8ea76a79.md]]'
+content_id: e09c5a5e40f3898240b89b4bc8d4a43da020e0dc04d3245f32d7ae80a2257eec
+---
+
+# file: src/syncs/reviews.sync.ts
+
+```typescript
+import { actions, Frames, Sync } from "@engine";
+import { Requesting, Reviewing, Session } from "@concepts";
+
+const INVALID_SESSION_ERROR = "Invalid session. Please sign in.";
+
+// ---------------------------------------------------------------------------
+// Add Review
+// ---------------------------------------------------------------------------
+
+export const RequestAddReview: Sync = ({
+  request,
+  session,
+  item,
+  rating,
+  entry,
+  currentUser,
+}) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Reviewing/addReview", session, item, rating, entry },
+    { request },
+  ]),
+  where: async (frames) =>
+    await frames.query(Session._getUser, { session }, { user: currentUser }),
+  then: actions([
+    Reviewing.addReview,
+    { user: currentUser, item, rating, entry },
+  ]),
+});
+
+export const AddReviewGuardResponse: Sync = ({
+  request,
+  session,
+  item,
+  rating,
+  entry,
+  currentUser,
+  errorMessage,
+}) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Reviewing/addReview", session, item, rating, entry },
+    { request },
+  ]),
+  where: async (frames) => {
+    const originalFrame = (frames[0] ?? {}) as Record<symbol, unknown>;
+    const authenticated = await frames.query(Session._getUser, { session }, { user: currentUser });
+    if (authenticated.length === 0) {
+      return new Frames({ ...originalFrame, [errorMessage]: INVALID_SESSION_ERROR });
+    }
+    return new Frames();
+  },
+  then: actions([Requesting.respond, { request, error: errorMessage }]),
+});
+
+export const AddReviewResponse: Sync = ({ request, review }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Reviewing/addReview" }, { request }],
+    [Reviewing.addReview, {}, { review }],
+  ),
+  then: actions([Requesting.respond, { request, review }]),
+});
+
+export const AddReviewErrorResponse: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Reviewing/addReview" }, { request }],
+    [Reviewing.addReview, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+// ---------------------------------------------------------------------------
+// Modify Review
+// ---------------------------------------------------------------------------
+
+export const RequestModifyReview: Sync = ({
+  request,
+  session,
+  item,
+  rating,
+  entry,
+  currentUser,
+}) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Reviewing/modifyReview", session, item, rating, entry },
+    { request },
+  ]),
+  where: async (frames) =>
+    await frames.query(Session._getUser, { session }, { user: currentUser }),
+  then: actions([
+    Reviewing.modifyReview,
+    { user: currentUser, item, rating, entry },
+  ]),
+});
+
+export const ModifyReviewGuardResponse: Sync = ({
+  request,
+  session,
+  item,
+  rating,
+  entry,
+  currentUser,
+  errorMessage,
+}) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Reviewing/modifyReview", session, item, rating, entry },
+    { request },
+  ]),
+  where: async (frames) => {
+    const originalFrame = (frames[0] ?? {}) as Record<symbol, unknown>;
+    const authenticated = await frames.query(Session._getUser, { session }, { user: currentUser });
+    if (authenticated.length === 0) {
+      return new Frames({ ...originalFrame, [errorMessage]: INVALID_SESSION_ERROR });
+    }
+    return new Frames();
+  },
+  then: actions([Requesting.respond, { request, error: errorMessage }]),
+});
+
+export const ModifyReviewResponse: Sync = ({ request, review }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Reviewing/modifyReview" }, { request }],
+    [Reviewing.modifyReview, {}, { review }],
+  ),
+  then: actions([Requesting.respond, { request, review }]),
+});
+
+export const ModifyReviewErrorResponse: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Reviewing/modifyReview" }, { request }],
+    [Reviewing.modifyReview, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+// ---------------------------------------------------------------------------
+// Remove Review
+// ---------------------------------------------------------------------------
+
+export const RequestRemoveReview: Sync = ({
+  request,
+  session,
+  item,
+  currentUser,
+}) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Reviewing/removeReview", session, item },
+    { request },
+  ]),
+  where: async (frames) =>
+    await frames.query(Session._getUser, { session }, { user: currentUser }),
+  then: actions([
+    Reviewing.removeReview,
+    { user: currentUser, item },
+  ]),
+});
+
+export const RemoveReviewGuardResponse: Sync = ({
+  request,
+  session,
+  item,
+  currentUser,
+  errorMessage,
+}) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Reviewing/removeReview", session, item },
+    { request },
+  ]),
+  where: async (frames) => {
+    const originalFrame = (frames[0] ?? {}) as Record<symbol, unknown>;
+    const authenticated = await frames.query(Session._getUser, { session }, { user: currentUser });
+    if (authenticated.length === 0) {
+      return new Frames({ ...originalFrame, [errorMessage]: INVALID_SESSION_ERROR });
+    }
+    return new Frames();
+  },
+  then: actions([Requesting.respond, { request, error: errorMessage }]),
+});
+
+export const RemoveReviewResponse: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Reviewing/removeReview" }, { request }],
+    [Reviewing.removeReview, {}, {}],
+  ),
+  then: actions([Requesting.respond, { request, success: true }]),
+});
+
+export const RemoveReviewErrorResponse: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Reviewing/removeReview" }, { request }],
+    [Reviewing.removeReview, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+```
